@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 dir=.
 
 if [ $# != 2 ]; then

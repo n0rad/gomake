@@ -5,11 +5,11 @@ import (
 	"runtime"
 	"github.com/n0rad/go-erlog/data"
 	"github.com/blablacar/dgr/bin-dgr/common"
-	"path/filepath"
 	"github.com/n0rad/go-erlog/logs"
 	"github.com/n0rad/go-erlog/errs"
 	"github.com/n0rad/gomake/dist"
 	"io/ioutil"
+	"strings"
 )
 
 type Project struct {
@@ -19,35 +19,30 @@ type Project struct {
 }
 
 func newProject(workPath string) (*Project, error) {
-	config := newConfig()
-
-	if config.name == "" {
-		abs, err := filepath.Abs(workPath)
-		if err != nil {
-			return nil, errs.WithF(data.WithField("path", workPath), "Failed to get absolute path of workPath")
-		}
-		config.name = filepath.Base(abs)
+	config, err := newConfig(workPath)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Project{
 		workPath: workPath,
 		config: config,
-		fields: data.WithField("name", config.name),
+		fields: data.WithField("name", config.Name),
 	}, nil
 }
 
 func (p *Project) Install() error {
 	logs.WithF(p.fields).Info("Installing app to $GOPATH/bin")
-	return common.CopyFile(p.buildFullname() + "/" + p.config.name, os.Getenv("GOPATH") + "/bin" + "/" + p.config.name)
+	return common.CopyFile(p.buildFullname() + "/" + p.config.Name, os.Getenv("GOPATH") + "/bin" + "/" + p.config.Name)
 }
 
 func (p *Project) Clean() error {
-	return os.RemoveAll(workPath + p.config.targetDirectory)
+	return os.RemoveAll(workPath + p.config.TargetDirectory)
 }
 
 func (p *Project) internalCommand(command string, args []string) error {
-	os.Setenv("app", p.config.name)
-	os.Setenv("github_repo", p.config.repository)
+	os.Setenv("app", p.config.Name)
+	os.Setenv("github_repo", strings.Replace(p.config.Repository, "github.com/", "", 1))
 	os.Chdir(p.workPath)
 	for _, asset := range []string{"build","release","test","quality", "clean"} {
 		content, err := dist.Asset("internal-scripts/command-"+asset+".sh")
@@ -64,7 +59,7 @@ func (p *Project) internalCommand(command string, args []string) error {
 ///////////////////////
 
 func (p *Project) buildFullname() string {
-	return p.config.name + "-" + p.config.version + "-" + runtime.GOOS + "-" + runtime.GOARCH
+	return p.config.Name + "-" + p.config.Version + "-" + runtime.GOOS + "-" + runtime.GOARCH
 }
 
 
