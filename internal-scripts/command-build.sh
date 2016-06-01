@@ -17,9 +17,9 @@ godep save ./${dir}/... || true
 
 
 # binary
-if [ -d ${dir}/scripts ]; then
+if [ -d ${dir}/internal-scripts ]; then
     [ -f ${GOPATH}/bin/go-bindata ] || go get -u github.com/jteeuwen/go-bindata/...
-    go-bindata -nomemcopy -pkg dist -o ${dir}/dist/bindata.go ${dir}/scripts/...
+    go-bindata -nomemcopy -pkg dist -o ${dir}/dist/bindata.go ${dir}/internal-scripts/...
 fi
 
 IFS=',' read -ra current <<< "$osarchi"

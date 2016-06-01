@@ -49,12 +49,14 @@ func (p *Project) internalCommand(command string, args []string) error {
 	os.Setenv("app", p.config.name)
 	os.Setenv("github_repo", p.config.repository)
 	os.Chdir(p.workPath)
-	content, err := dist.Asset("internal-scripts/command-"+command+".sh")
-	if err != nil {
-		return errs.WithE(err, "cannot found internal "+command+" script. This is a bug")
-	}
-	if err := ioutil.WriteFile("/tmp/command-"+command+".sh", content, 0777); err != nil {
-		return errs.WithEF(err, p.fields, "failed to write command-"+command+"")
+	for _, asset := range []string{"build","release","test","quality", "clean"} {
+		content, err := dist.Asset("internal-scripts/command-"+asset+".sh")
+		if err != nil {
+			return errs.WithE(err, "cannot found internal "+asset+" script. This is a bug")
+		}
+		if err := ioutil.WriteFile("/tmp/command-"+asset+".sh", content, 0777); err != nil {
+			return errs.WithEF(err, p.fields, "failed to write command-"+asset+"")
+		}
 	}
 	return common.ExecCmd("/tmp/command-"+command+".sh", args...)
 }

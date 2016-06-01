@@ -41,9 +41,9 @@ require_clean_work_tree () {
     fi
 }
 
-${dir}/scripts/command-clean.sh
-version=${version} ${dir}/scripts/command-build.sh ${osarchi}
-${dir}/scripts/command-test.sh
+/tmp/command-clean.sh
+version=${version} /tmp/command-build.sh ${osarchi}
+/tmp/command-test.sh
 require_clean_work_tree
 
 echo -e "\033[0;32mCompress releases\033[0m"
