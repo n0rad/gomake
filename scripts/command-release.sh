@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -e
 dir=$( dirname "$0" )/..
 
 if [ $# != 2 ]; then
@@ -41,9 +41,9 @@ require_clean_work_tree () {
     fi
 }
 
-${dir}/clean.sh
-version=${version} ${dir}/build.sh ${osarchi}
-${dir}/test.sh
+${dir}/scripts/command-clean.sh
+version=${version} ${dir}/scripts/command-build.sh ${osarchi}
+${dir}/scripts/command-test.sh
 require_clean_work_tree
 
 echo -e "\033[0;32mCompress releases\033[0m"
