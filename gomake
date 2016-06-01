@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+command -v gomake >/dev/null 2>&1 || {
+    if [ -z ${GOPATH+x} ]; then
+        echo "Please set \$GOPATH first"
+        exit 1
+    fi
+    url_data=$(curl -s https://api.github.com/repos/n0rad/gomake/releases)
+    url=$(curl -s https://api.github.com/repos/n0rad/gomake/releases | grep browser_download_url | grep 'tar.gz"' | head -n1 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | cut -f2 -d' ' | tr -d '"')
+    if [ -z ${url} ]; then
+        echo "gomake not found and cannot find a version to download"
+        exit 1
+    fi
+
+	wget -O /tmp/gomake.tar.gz $url
+	tar xvzf /tmp/gomake.tar.gz -C /tmp
+	mv /tmp/gomake*/gomake ${GOPATH}/bin/
+	rm -Rf /tmp/gomake*
+}
+
+gomake $@
