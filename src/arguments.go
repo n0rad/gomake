@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"github.com/blablacar/dgr/bin-dgr/common"
@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"fmt"
 )
 
 var workPath string
@@ -30,6 +31,15 @@ var workPath string
 //		newProject(workPath).clean()
 //	},
 //}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Version of dgr",
+	Long:  `Print the version number of dgr`,
+	Run: func(cmd *cobra.Command, args []string) {
+		displayVersionAndExit()
+	},
+}
 
 func prepareArgParser() (*cobra.Command, error) {
 	var err error
@@ -89,9 +99,27 @@ func prepareArgParser() (*cobra.Command, error) {
 		}
 	}
 
-	//rootCmd.AddCommand(cleanCmd)
+	rootCmd.AddCommand(versionCmd)
 	return rootCmd, nil
 }
+
+
+
+func displayVersionAndExit() {
+	fmt.Println(goMake)
+	if Version == "" {
+		Version = "0"
+	}
+	fmt.Printf("Version    : %s\n", Version)
+	if BuildDate != "" {
+		fmt.Printf("Build date : %s\n", BuildDate)
+	}
+	if CommitHash != "" {
+		fmt.Printf("CommitHash : %s\n", CommitHash)
+	}
+	os.Exit(0)
+}
+
 
 func discoverStringArgument(shortName string, longName string, defaultValue string) (string, error) {
 	workPathArgument := "--" + longName

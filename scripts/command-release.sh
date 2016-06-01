@@ -7,8 +7,8 @@ if [ $# != 2 ]; then
     exit 1
 fi
 
-app="nerve"
-github_repo="blablacar/go-nerve"
+app="gomake"
+github_repo="n0rad/gomake"
 version=$1
 access_token=$2
 osarchi="linux-amd64,darwin-amd64,windows-amd64"

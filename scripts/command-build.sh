@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e
+set -x
 start=`date +%s`
 dir=$( dirname "$0" )/..
 
-app=nerve
+app=gomake
 osarchi="$(go env GOHOSTOS)-$(go env GOHOSTARCH)"
 [ -z "$1" ] || osarchi="$1"
 [ ! -z ${version+x} ] || version="0"
