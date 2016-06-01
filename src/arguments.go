@@ -106,8 +106,8 @@ var testCmd = &cobra.Command{
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Version of dgr",
-	Long:  `Print the version number of dgr`,
+	Short: "gomake version",
+	Long:  `Print gomake version info`,
 	Run: func(cmd *cobra.Command, args []string) {
 		displayVersionAndExit()
 	},
