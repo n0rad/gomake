@@ -2,9 +2,9 @@
 set -e
 set -x
 start=`date +%s`
-dir=$( dirname "$0" )/..
+dir=.
 
-app=gomake
+#app=gomake
 osarchi="$(go env GOHOSTOS)-$(go env GOHOSTARCH)"
 [ -z "$1" ] || osarchi="$1"
 [ ! -z ${version+x} ] || version="0"
@@ -17,8 +17,10 @@ godep save ./${dir}/... || true
 
 
 # binary
-[ -f ${GOPATH}/bin/go-bindata ] || go get -u github.com/jteeuwen/go-bindata/...
-go-bindata -nomemcopy -pkg dist -o ${dir}/dist/bindata.go ${dir}/internal-scripts/...
+if [ -d ${dir}/scripts ]; then
+    [ -f ${GOPATH}/bin/go-bindata ] || go get -u github.com/jteeuwen/go-bindata/...
+    go-bindata -nomemcopy -pkg dist -o ${dir}/dist/bindata.go ${dir}/scripts/...
+fi
 
 IFS=',' read -ra current <<< "$osarchi"
 for e in "${current[@]}"; do

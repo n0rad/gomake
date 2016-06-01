@@ -14,23 +14,95 @@ import (
 
 var workPath string
 
-//var all = &cobra.Command{
-//	Use:   "clean",
-//	Short: "clean build",
-//	Long:  `clean build, including rootfs`,
-//	Run: func(cmd *cobra.Command, args []string) {
-//		newProject(workPath).clean()
-//	},
-//}
-//
-//var cleanCmd = &cobra.Command{
-//	Use:   "clean",
-//	Short: "clean build",
-//	Long:  `clean build, including rootfs`,
-//	Run: func(cmd *cobra.Command, args []string) {
-//		newProject(workPath).clean()
-//	},
-//}
+var installCmd = &cobra.Command{
+	Use:   "install",
+	Short: "install binary to $GOPATH",
+	Run: func(cmd *cobra.Command, args []string) {
+		project, err := newProject(workPath)
+		if err != nil {
+			logs.WithE(err).Fatal("Install command failed")
+		}
+		err = project.Install()
+		if err != nil {
+			logs.WithE(err).Fatal("Install command failed")
+		}
+	},
+}
+
+var cleanCmd = &cobra.Command{
+	Use:   "clean",
+	Short: "clean",
+	Run: func(cmd *cobra.Command, args []string) {
+		project, err := newProject(workPath)
+		if err != nil {
+			logs.WithE(err).Fatal("Clean command failed")
+		}
+		err = project.Clean()
+		if err != nil {
+			logs.WithE(err).Fatal("Clean command failed")
+		}
+	},
+}
+
+var buildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "build",
+	Run: func(cmd *cobra.Command, args []string) {
+		project, err := newProject(workPath)
+		if err != nil {
+			logs.WithE(err).Fatal("Build command failed")
+		}
+		err = project.internalCommand("build", args)
+		if err != nil {
+			logs.WithE(err).Fatal("Build command failed")
+		}
+	},
+}
+
+var qualityCmd = &cobra.Command{
+	Use:   "quality",
+	Short: "quality",
+	Run: func(cmd *cobra.Command, args []string) {
+		project, err := newProject(workPath)
+		if err != nil {
+			logs.WithE(err).Fatal("Quality command failed")
+		}
+		err = project.internalCommand("quality", args)
+		if err != nil {
+			logs.WithE(err).Fatal("Quality command failed")
+		}
+	},
+}
+
+var releaseCmd = &cobra.Command{
+	Use:   "release",
+	Short: "release",
+	Run: func(cmd *cobra.Command, args []string) {
+		project, err := newProject(workPath)
+		if err != nil {
+			logs.WithE(err).Fatal("Release command failed")
+		}
+		err = project.internalCommand("release", args)
+		if err != nil {
+			logs.WithE(err).Fatal("Release command failed")
+		}
+	},
+}
+
+var testCmd = &cobra.Command{
+	Use:   "test",
+	Short: "test",
+	Run: func(cmd *cobra.Command, args []string) {
+		project, err := newProject(workPath)
+		if err != nil {
+			logs.WithE(err).Fatal("Test command failed")
+		}
+		err = project.internalCommand("test", args)
+		if err != nil {
+			logs.WithE(err).Fatal("Test command failed")
+		}
+	},
+}
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -81,6 +153,7 @@ func prepareArgParser() (*cobra.Command, error) {
 
 	rootCmd.PersistentFlags().BoolVarP(&version, "version", "V", false, "Display dgr version")
 
+	scripts := []string{}
 	if files, err := ioutil.ReadDir(workPath + "/scripts"); err == nil {
 		logs.WithField("path", workPath+"/scripts").Debug("Found scripts directory")
 		for _, file := range files {
@@ -91,18 +164,33 @@ func prepareArgParser() (*cobra.Command, error) {
 					Use:   files2[0],
 					Short: "Run command from " + scriptFullPath,
 					Run: func(cmd *cobra.Command, args []string) {
-						common.ExecCmd(scriptFullPath, args...)
+						if err := common.ExecCmd(scriptFullPath, args...); err != nil {
+							logs.WithEF(err, data.WithField("script", scriptFullPath)).Fatal("External command failed")
+						}
 					},
 				}
 				rootCmd.AddCommand(cmd)
+				scripts = append(scripts, files2[0])
 			}
 		}
 	}
 
-	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(versionCmd, cleanCmd, installCmd)
+	for _, cmd := range []*cobra.Command{buildCmd, qualityCmd, releaseCmd, testCmd} {
+		found := false
+		for _, script := range scripts {
+			if script == cmd.Use {
+				found = true
+				break
+			}
+		}
+		if !found {
+			rootCmd.AddCommand(cmd)
+		}
+	}
+
 	return rootCmd, nil
 }
-
 
 
 func displayVersionAndExit() {
