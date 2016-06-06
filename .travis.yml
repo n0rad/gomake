@@ -3,5 +3,9 @@ language: go
 go:
  - 1.6
 
+install: # prevent travis to try to be smart
+  - sudo apt-get install -qq upx # to remove
+  - true
+
 script:
-  - ./gomake build
+  - ./gomake.sh build

@@ -14,6 +14,7 @@ update() {
 
 	wget -O /tmp/gomake.tar.gz ${url}
 	tar xvzf /tmp/gomake.tar.gz -C /tmp
+	mkdir -p ${GOPATH}/bin/
 	mv /tmp/gomake*/gomake ${GOPATH}/bin/
 	rm -Rf /tmp/gomake*
 
