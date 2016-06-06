@@ -10,7 +10,7 @@ osarchi="$(go env GOHOSTOS)-$(go env GOHOSTARCH)"
 [ ! -z ${version+x} ] || version="0"
 
 [ -f ${GOPATH}/bin/godep ] || go get github.com/tools/godep
-[ -f /usr/bin/upx ] || (echo "upx is required to build" && exit 1)
+#[ -f /usr/bin/upx ] || (echo "upx is required to build" && exit 1)
 
 echo -e "\033[0;32mSave Dependencies\033[0m"
 godep save ./${dir}/... || true
@@ -32,7 +32,7 @@ for e in "${current[@]}"; do
 
     if [ "${e%-*}" != "darwin" ]; then
         echo -e "\033[0;32mCompressing ${e}\033[0m"
-        upx ${dir}/dist/${app}-v${version}-${e}/${app} &> /dev/null
+#        upx ${dir}/dist/${app}-v${version}-${e}/${app} &> /dev/null
     fi
 
     if [ "${e%-*}" == "windows" ]; then
