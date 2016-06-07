@@ -194,7 +194,7 @@ global_start=`date +%s`
 read -d '' helper <<EOF || true
 Usage: gomake [-v version][-t token] command...
 
-  command...                commands to run among clean, build, quality, test, release
+  command...                commands to run among clean, build, quality, test, release, gomake_update
                             default is : 'clean build test quality'
   -v, --version=version     version of the app
   -h, --help                this helper
@@ -260,7 +260,7 @@ fi
 command_count=0
 for i in "${commands[@]}"; do
     case ${i} in
-        test|build|release|clean|quality)
+        test|build|release|clean|quality,gomake_update)
             ${i}
             ((++command_count))
         ;;
