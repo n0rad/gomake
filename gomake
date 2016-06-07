@@ -113,7 +113,7 @@ require_clean_work_tree() {
     # Disallow unstaged changes in the working tree
     if ! git diff-files --quiet --ignore-submodules --
     then
-        echo_red "cannot $1: you have unstaged changes."
+        echo_red "cannot release: you have unstaged changes."
         git diff-files --name-status -r --ignore-submodules -- >&2
         err=1
     fi
@@ -121,7 +121,7 @@ require_clean_work_tree() {
     # Disallow uncommitted changes in the index
     if ! git diff-index --cached --quiet HEAD --ignore-submodules --
     then
-        echo_red "cannot $1: your index contains uncommitted changes."
+        echo_red "cannot release: your index contains uncommitted changes."
         git diff-index --cached --name-status -r --ignore-submodules HEAD -- >&2
         err=1
     fi
@@ -135,8 +135,8 @@ require_clean_work_tree() {
 
 release() {
     start=`date +%s`
-    if [ "${repos%%/*}" != "github.com" ]; then
-        echo "Push to '${repos%%/*}' not implemented"
+    if [ "${repo%%/*}" != "github.com" ]; then
+        echo "Push to '${repo%%/*}' not implemented"
         exit 1
     fi
     if [ -z "${version}" ] || [ "${version}" == "0" ]; then
@@ -148,11 +148,12 @@ release() {
         exit 1
     fi
 
-    github_repo=${repos#*/}
+    github_repo=${repo#*/}
 
     clean
-    build ${osarchi}
+    build ${release_osarchi}
     test
+    quality
     require_clean_work_tree
 
     echo_green "Compress release"
@@ -176,7 +177,7 @@ release() {
         filename=${fullpath##*/}
         curl -i -X POST -H "Content-Type: application/x-gzip" --data-binary "@${fullpath}" "${posturl%\{?name,label\}}?name=${filename}&label=${filename}&access_token=${access_token}"
     done
-    echo_purple Release duration : $((`date +%s`-${start}))s
+    echo_purple "Release duration : $((`date +%s`-${start}))s"
 }
 
 test() {
