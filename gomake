@@ -260,7 +260,7 @@ fi
 command_count=0
 for i in "${commands[@]}"; do
     case ${i} in
-        test|build|release|clean|quality,gomake_update)
+        test|build|release|clean|quality|gomake_update)
             ${i}
             ((++command_count))
         ;;
