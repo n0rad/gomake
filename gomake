@@ -15,7 +15,8 @@ echo_green() {
 }
 
 gomake_update() {
-    wget https://raw.githubusercontent.com/n0rad/gomake/master/gomake.sh -o ${dir}/gomake.tmp
+    echo_green "Downloading gomake"
+    wget https://raw.githubusercontent.com/n0rad/gomake/master/gomake -o ${dir}/gomake.tmp
     chmod +x ${dir}/gomake.tmp
     mv ${dir}/gomake.tmp ${dir}/$0
 }
