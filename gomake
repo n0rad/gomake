@@ -1,5 +1,4 @@
 #!/bin/bash
-# this is a script to build go apps
 set -e
 
  : ${target_name:=dist}
@@ -11,6 +10,27 @@ set -e
  : ${version:=0}
  : ${access_token:=}
  : ${upx:=}
+
+read -d '' helper <<EOF || true
+Usage: gomake [-v version][-t token] command...
+  gomake is a script to build go apps
+
+  command
+      clean                 clean '${target_name}/' directory
+      build                 build (current platform only by default)
+      quality               Format, Fix, check error handled, lint, vet, misspell, ineffassign, Gocyclo
+      test                  run go tests
+      release               clean, build all platform, test, check git is clean, tag, push tag & build ZIPs
+      gomake_update         self updating by downloading and replacing with latest version
+
+         default is 'clean build test quality'
+
+  -v, --version=version     version of the app
+  -h, --help                this helper
+  -t, --token=token         token to push releases
+  -W, --work-path=path      set working path, default is ./
+EOF
+
 
 echo_red() {
     echo >&2 -e "\033[0;31m${@}\033[0m"
@@ -207,21 +227,9 @@ test() {
 
 global_start=`date +%s`
 
-read -d '' helper <<EOF || true
-Usage: gomake [-v version][-t token] command...
-
-  command...                commands to run among clean, build, quality, test, release, gomake_update
-                            default is : 'clean build test quality'
-  -v, --version=version     version of the app
-  -h, --help                this helper
-  -t, --token=token         token to push releases
-  -W, --work-path=path      set working path, default is ./
-EOF
-
 if [ -f ${work_path}/gomake.cfg ]; then
  . ${work_path}/gomake.cfg
 fi
-
 
 commands=()
 while [ $# -gt 0 ]; do
@@ -237,7 +245,6 @@ while [ $# -gt 0 ]; do
         *)          commands+=("${1}"); shift;;
     esac
 done
-
 
 if [ ${#commands[@]} -eq 0 ]; then
     commands=(clean build test quality)
