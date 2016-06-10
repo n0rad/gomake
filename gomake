@@ -197,7 +197,7 @@ release() {
 test() {
     start=`date +%s`
     echo_green "Testing"
-    godep go test -cover ${work_path}/...
+    godep go test -cover $(go list ${work_path}/... | grep -v vendor/)
 
     echo_purple "Test duration : $((`date +%s`-${start}))s"
 }
