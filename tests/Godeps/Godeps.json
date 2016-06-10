@@ -1,0 +1,9 @@
+{
+	"ImportPath": "github.com/n0rad/gomake/tests",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v65",
+	"Packages": [
+		"././..."
+	],
+	"Deps": []
+}

@@ -2,6 +2,16 @@
 # this is a script to build go apps
 set -e
 
+ : ${target_name:=dist}
+ : ${work_path:=.}
+ : ${app:=$(basename $(cd "${work_path}"; pwd))}
+ : ${repo:=$(git config --get remote.origin.url | sed -n 's/.*@\(.*\)\.git/\1/p' | tr : /)}
+ : ${osarchi:="$(go env GOHOSTOS)-$(go env GOHOSTARCH)"}
+ : ${release_osarchi:="linux-amd64,darwin-amd64,windows-amd64"}
+ : ${version:=0}
+ : ${access_token:=}
+ : ${upx:=}
+
 echo_red() {
     echo >&2 -e "\033[0;31m${@}\033[0m"
 }
@@ -80,12 +90,12 @@ quality() {
 
     echo_green "Err check"
     [ -f ${GOPATH}/bin/errcheck ] || go get -u github.com/kisielk/errcheck
-    errcheck ./... | grep -v vendor
+    errcheck ./... | grep -v 'vendor/' | grep -v 'Close(' | grep -v '_test.go'
 
     echo_green "Lint"
     [ -f ${GOPATH}/bin/golint ] || go get -u github.com/golang/lint/golint
     for i in ${go_files}; do
-        golint ${i}
+        golint ${i} | grep -v 'should have comment '
     done
 
     echo_green "Vet"
@@ -187,7 +197,7 @@ release() {
 test() {
     start=`date +%s`
     echo_green "Testing"
-    godep go test -cover ${work_path}
+    godep go test -cover ${work_path}/...
 
     echo_purple "Test duration : $((`date +%s`-${start}))s"
 }
@@ -207,16 +217,6 @@ Usage: gomake [-v version][-t token] command...
   -t, --token=token         token to push releases
   -W, --work-path=path      set working path, default is ./
 EOF
-
-target_name=${target_name:=dist}
-work_path=${work_path:=.}
-app=${app:=$(basename $(cd "${work_path}"; pwd))}
-repo=${repo:=$(git config --get remote.origin.url | sed -n 's/.*@\(.*\)\.git/\1/p' | tr : /)}
-osarchi=${osarchi:="$(go env GOHOSTOS)-$(go env GOHOSTARCH)"}
-release_osarchi=${release_osarchi:="linux-amd64,darwin-amd64,windows-amd64"}
-version=${version:=0}
-access_token=${access_token:=}
-upx=${upx:=}
 
 if [ -f ${work_path}/gomake.cfg ]; then
  . ${work_path}/gomake.cfg
