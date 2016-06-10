@@ -115,7 +115,7 @@ quality() {
     echo_green "Lint"
     [ -f ${GOPATH}/bin/golint ] || go get -u github.com/golang/lint/golint
     for i in ${go_files}; do
-        golint ${i} | grep -v 'should have comment '
+        golint ${i} | grep -v 'should have comment ' || true
     done
 
     echo_green "Vet"
