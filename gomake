@@ -227,10 +227,6 @@ test() {
 
 global_start=`date +%s`
 
-if [ -f ${work_path}/gomake.cfg ]; then
- . ${work_path}/gomake.cfg
-fi
-
 commands=()
 while [ $# -gt 0 ]; do
     case "${1}" in
@@ -245,6 +241,10 @@ while [ $# -gt 0 ]; do
         *)          commands+=("${1}"); shift;;
     esac
 done
+
+if [ -f ${work_path}/gomake.cfg ]; then
+ . ${work_path}/gomake.cfg
+fi
 
 if [ ${#commands[@]} -eq 0 ]; then
     commands=(clean build test quality)
