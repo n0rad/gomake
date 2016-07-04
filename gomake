@@ -80,10 +80,10 @@ build() {
             -o ${target_name}/${app}-v${version}-${e}/${app})
 
         if [ ${upx} ]; then
-#            if [ "${e%-*}" != "darwin" ]; then
+            if [ "${e%-*}" != "darwin" ]; then
                 echo_green "Compressing ${e}"
                 upx ${work_path}/${target_name}/${app}-v${version}-${e}/${app} &> /dev/null
-#            fi
+            fi
         fi
 
         if [ "${e%-*}" == "windows" ]; then
