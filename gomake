@@ -20,6 +20,7 @@ Usage: gomake [-v version][-t token] command...
       build                 build (current platform only by default)
       quality               Format, Fix, check error handled, lint, vet, misspell, ineffassign, Gocyclo
       test                  run go tests
+      install               install release to \$GOPATH/bin
       release               clean, build all platform, test, check git is clean, tag, push tag & build ZIPs
       gomake_update         self updating by downloading and replacing with latest version
 
@@ -285,7 +286,7 @@ fi
 command_count=0
 for i in "${commands[@]}"; do
     case ${i} in
-        test|build|release|clean|quality|gomake_update) ${i}; ((++command_count));;
+        test|build|release|clean|quality|install|gomake_update) ${i}; ((++command_count));;
         *)                                              echo_red "Unknown command '${i}'"; echo ${helper}; exit 1;;
     esac
 done
