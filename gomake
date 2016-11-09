@@ -90,8 +90,6 @@ build() {
         pre-build
     fi
 
-    [ -f /usr/bin/upx ] || (echo "upx is required to build" && exit 1)
-
     echo_green "Goimports"
     [ -f ${GOPATH}/bin/goimports ] || go get -u golang.org/x/tools/cmd/goimports
     goimports -w ${go_files}
@@ -114,6 +112,7 @@ build() {
 
         if [ ${upx} ]; then
             echo_green "Compressing ${e}"
+            [ -f /usr/bin/upx ] || (echo "upx is required to compress" && exit 1)
             upx ${work_path}/${target_name}/${app}-v${version}-${e}/${app} &> /dev/null
         fi
 
