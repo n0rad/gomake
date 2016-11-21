@@ -95,7 +95,7 @@ build() {
     goimports -w ${go_files}
 
 #    echo_green "Save Dependencies"
-#    [ -f ${GOPATH}/bin/godep ] || go get github.com/tools/godep
+    [ -f ${GOPATH}/bin/godep ] || go get github.com/tools/godep
 #    godep save ./${work_path}/... || echo_yellow "Cannot save dependencies. Continuing"
 
     if [ "$(ls -A ${work_path}/${target_name}/bindata)" ]; then
