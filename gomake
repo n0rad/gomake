@@ -10,6 +10,7 @@ set -e
  : ${version:=0}
  : ${token:=}
  : ${upx:=}
+ : ${build_packages:=}
 
 read -d '' helper <<EOF || true
 Usage: gomake [-v version][-t token] command...
@@ -104,7 +105,7 @@ build() {
         echo_green "Building $e"
 
         $(cd ${work_path} && GOOS="${e%-*}" GOARCH="${e#*-}" go build -ldflags "-s -w -X main.BuildTime=`date -u '+%Y-%m-%d_%H:%M:%S_UTC'` -X main.Version=${version}-`git rev-parse --short HEAD`" \
-            -o ${target_name}/${app}-v${version}-${e}/${app})
+            -o ${target_name}/${app}-v${version}-${e}/${app} ${build_packages})
 
         if [ ${upx} ]; then
             echo_green "Compressing ${e}"
