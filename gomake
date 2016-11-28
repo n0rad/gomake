@@ -11,6 +11,7 @@ set -e
  : ${token:=}
  : ${upx:=}
  : ${build_packages:=}
+ : ${build_ldflags:="-s -w -X main.BuildTime=`date -u '+%Y-%m-%d_%H:%M:%S_UTC'` -X main.BuildVersion=\${version} -X main.BuildCommit=`git rev-parse --short HEAD`"}
 
 read -d '' helper <<EOF || true
 Usage: gomake [-v version][-t token] command...
@@ -100,26 +101,30 @@ build() {
         go-bindata -nomemcopy -pkg dist -prefix dist/bindata -o ${work_path}/${target_name}/bindata.go ${work_path}/${target_name}/bindata/...
     fi
 
+    ldflags=$(eval echo ${build_ldflags})
     IFS=',' read -ra current <<< "$osarchi"
     for e in "${current[@]}"; do
         echo_green "Building $e"
 
-        $(cd ${work_path} && GOOS="${e%-*}" GOARCH="${e#*-}" go build -ldflags "-s -w -X main.BuildTime=`date -u '+%Y-%m-%d_%H:%M:%S_UTC'` -X main.Version=${version}-`git rev-parse --short HEAD`" \
-            -o ${target_name}/${app}-v${version}-${e}/${app} ${build_packages})
+        binaryPath=$(targetBinaryPath ${e})
+        $(cd ${work_path} && GOOS="${e%-*}" GOARCH="${e#*-}" go build -ldflags "${ldflags}" -o ${target_name}/${binaryPath} ${build_packages})
 
         if [ ${upx} ]; then
             echo_green "Compressing ${e}"
             [ -f /usr/bin/upx ] || (echo "upx is required to compress" && exit 1)
-            upx ${work_path}/${target_name}/${app}-v${version}-${e}/${app} &> /dev/null
+            upx ${work_path}/${target_name}/${binaryPath} &> /dev/null
         fi
 
         if [ "${e%-*}" == "windows" ]; then
-            mv ${work_path}/${target_name}/${app}-v${version}-${e}/${app} ${work_path}/${target_name}/${app}-v${version}-${e}/${app}.exe
+            mv ${work_path}/${target_name}/${binaryPath} ${work_path}/${target_name}/${binaryPath}.exe
         fi
     done
     echo_purple "Build duration : $((`date +%s`-${start}))s"
 }
 
+targetBinaryPath() {
+    echo ${app}-v${version}-${1}/${app}
+}
 
 install() {
     echo_green "Installing"
@@ -248,6 +253,10 @@ test() {
     start=`date +%s`
     echo_green "Testing"
     go test -cover $(go list ${work_path}/... | grep -v vendor/)
+
+    if [ `type -t pre-build`"" == 'function' ]; then
+        test
+    fi
 
     echo_purple "Test duration : $((`date +%s`-${start}))s"
 }
