@@ -254,8 +254,8 @@ test() {
     echo_green "Testing"
     go test -cover $(go list ${work_path}/... | grep -v vendor/)
 
-    if [ `type -t pre-build`"" == 'function' ]; then
-        test
+    if [ `type -t extra-test`"" == 'function' ]; then
+        extra-test
     fi
 
     echo_purple "Test duration : $((`date +%s`-${start}))s"
