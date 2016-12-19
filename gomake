@@ -9,10 +9,10 @@ set -efo pipefail # TODO u
  : ${release_osarchi:="linux-amd64,darwin-amd64,windows-amd64"}
  : ${version:=0}
  : ${token:=}
- : ${upx:=}
+ : ${upx:=false}
  : ${build_packages:=}
  : ${build_ldflags:="-s -w -X main.BuildTime=`date -u '+%Y-%m-%d_%H:%M:%S_UTC'` -X main.BuildVersion=\${version} -X main.BuildCommit=`git rev-parse --short HEAD`"}
- : ${errcheck:=1}
+ : ${errcheck:=true}
 
 read -d '' helper <<EOF || true
 Usage: gomake [-v version][-t token] command...
@@ -94,7 +94,7 @@ build() {
     fi
 
     echo_green "Goimports"
-    command -v goimports || go get -u golang.org/x/tools/cmd/goimports
+    command -v goimports > /dev/null || go get -u golang.org/x/tools/cmd/goimports
     goimports -w ${go_files}
 
     echo_green "Format"
@@ -104,7 +104,7 @@ build() {
     go tool fix ${go_files}
 
     if [ "$(ls -A ${work_path}/${target_name}/bindata)" ]; then
-        command -v go-bindata || go get -u github.com/jteeuwen/go-bindata/...
+        command -v go-bindata > /dev/null || go get -u github.com/jteeuwen/go-bindata/...
         go-bindata -nomemcopy -pkg dist -prefix dist/bindata -o ${work_path}/${target_name}/bindata.go ${work_path}/${target_name}/bindata/...
     fi
 
@@ -116,9 +116,9 @@ build() {
         binaryPath=$(targetBinaryPath ${e})
         $(cd ${work_path} && GOOS="${e%-*}" GOARCH="${e#*-}" go build -ldflags "${ldflags}" -o ${target_name}/${binaryPath} ${build_packages})
 
-        if [ ${upx} ]; then
-            echo_green "Compressing ${e}"
-            command -v upx || (echo "upx is required to compress" && exit 1)
+        if [ "$upx" = true ]; then
+            echo_green "Compressing ${e}" # TODO compress on release only
+            command -v upx > /dev/null || (echo "upx is required to compress" && exit 1)
             upx ${work_path}/${target_name}/${binaryPath} &> /dev/null
         fi
 
@@ -142,16 +142,16 @@ quality() {
     start=$(date +%s)
     cd ${work_path}
 
-    if [ ${errcheck} == 1 ]; then
+    if [ "${errcheck}" = true ]; then
         echo_green "Err check"
-        command -v errcheck || go get -u github.com/kisielk/errcheck
+        command -v errcheck > /dev/null || go get -u github.com/kisielk/errcheck
         res=$(errcheck ./... | grep -v 'vendor/' | grep -v 'Close(' | grep -v '_test.go')
         err_count "${res}"
         echo_red "${res}"
     fi
 
     echo_green "Lint"
-    command -v golint || go get -u github.com/golang/lint/golint
+    command -v golint > /dev/null || go get -u github.com/golang/lint/golint
     for i in ${go_files}; do
         golint ${i} | grep -v 'should have comment ' || true
     done
@@ -160,17 +160,17 @@ quality() {
     go tool vet ${go_files} || true
 
     echo_green "Misspell"
-    command -v misspell || go get -u github.com/client9/misspell/cmd/misspell
+    command -v misspell > /dev/null || go get -u github.com/client9/misspell/cmd/misspell
     misspell -source=text ${go_files}
 
     echo_green "Ineffassign"
-    command -v ineffassign || go get -u github.com/gordonklaus/ineffassign
+    command -v ineffassign > /dev/null || go get -u github.com/gordonklaus/ineffassign
     for i in ${go_files}; do
         ineffassign -n ${i} || true
     done
 
     echo_green "Gocyclo"
-    command -v gocyclo || go get -u github.com/fzipp/gocyclo
+    command -v gocyclo > /dev/null || go get -u github.com/fzipp/gocyclo
     gocyclo -over 15 ${go_files} || true
 
     cd -
