@@ -1,6 +1,12 @@
 # Gomake
 
-go project builder tool written in go
+Simple go project builder tool written in go.
+
+The idea of `gomake` is to have a fully self contain project build system so even build tools are reproductible.
+To achieve that, you have to `vendor` in your project gomake sources.
+
+All tools used to `build`, `test` and `check` quality will be save as a lib dependency of your project (not included in your app),
+so your project is fully standalone.
 
 
 ## Usage 
@@ -15,7 +21,7 @@ import "github.com/n0rad/gomake"
 func main() {
 	gomake.ProjectBuilder().
 		WithStep(&gomake.StepBuild{
-			BinaryName: "hdm",
+			BinaryName: "my-app",
 		}).
 		MustBuild().MustExecute()
 }
@@ -47,8 +53,14 @@ release:
 	go run $(GOMAKE_PATH) release
 ```
 
-shell script:
+`gomake` shell script:
 ```shell script
 #!/bin/sh
 exec go run "$( cd "$(dirname "$0")" ; pwd -P )/hack" $@
 ``` 
+
+gomake uses `dist/` directory to build and `dist-tools/` directory to to build tools, those directories should be added to `.gitignore`
+```gitignore
+/dist/
+/dist-tools/
+```

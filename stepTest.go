@@ -20,7 +20,7 @@ func (c *StepTest) GetCommand() *cobra.Command {
 		Use:   "test",
 		Short: "run tests",
 		RunE: commandDurationWrapper(func(cmd *cobra.Command, args []string) error {
-			return Exec("go", "test", "-cover", ".../")
+			return ExecShell("go test $(go list ./... | grep -v '/vendor/')")
 		}),
 	}
 	return cmd

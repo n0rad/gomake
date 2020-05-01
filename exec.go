@@ -15,6 +15,10 @@ func Exec(head string, args ...string) error {
 	return ExecStdinStdoutStderr(os.Stdin, os.Stdout, os.Stderr, head, args...)
 }
 
+func ExecShell(cmd string) error {
+	return Exec("sh", "-c", cmd)
+}
+
 func ExecGetStd(head string, args ...string) (string, error) {
 	stdout, stderr, err := ExecGetStdoutStderr(head, args...)
 	stdout += stderr
@@ -59,8 +63,4 @@ func ExecShellGetStd(cmd string) (string, error) {
 	stdout, stderr, err := ExecGetStdoutStderr("bash", "-o", "pipefail", "-c", cmd)
 	stdout += stderr
 	return stdout, err
-}
-
-func ExecShellGetStdout(cmd string) (string, error) {
-	return ExecGetStdout("bash", "-o", "pipefail", "-c", cmd)
 }

@@ -24,17 +24,22 @@ func (c *StepClean) GetCommand() *cobra.Command {
 		Use:   "clean",
 		Short: "clean build directory",
 		RunE: commandDurationWrapper(func(cmd *cobra.Command, args []string) error {
+			logs.Info("Cleaning build")
+			if err := os.RemoveAll("./dist/"); err != nil {
+				return err
+			}
+
 			if tools {
 				logs.Info("Cleaning tools")
-				return os.RemoveAll("./dist-tools/")
-			} else {
-				logs.Info("Cleaning")
-				return os.RemoveAll("./dist/")
+				if err := os.RemoveAll("./dist-tools/"); err != nil {
+					return err
+				}
 			}
+			return nil
 		}),
 	}
 
-	cmd.Flags().BoolVarP(&tools, "tools", "t", false, "clean build tools")
+	cmd.Flags().BoolVarP(&tools, "tools", "t", false, "Also clean build tools")
 
 	return cmd
 }

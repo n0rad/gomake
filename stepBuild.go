@@ -17,7 +17,7 @@ import (
 type StepBuild struct {
 	BinaryName string
 	OsArch     string
-	Vendor     *bool
+	UseVendor  *bool
 	Version    string
 	//Upx           bool
 }
@@ -39,9 +39,9 @@ func (c *StepBuild) Init() error {
 		c.OsArch = runtime.GOOS + "-" + runtime.GOARCH
 	}
 
-	if c.Vendor == nil {
+	if c.UseVendor == nil {
 		vendor := true
-		c.Vendor = &vendor
+		c.UseVendor = &vendor
 	}
 
 	if c.Version == "" {
@@ -75,14 +75,14 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				return err
 			}
 
-			logs.Info("Running Fix")
+			logs.Info("Running fix")
 			if err := Exec("go", "fix"); err != nil {
 				return err
 			}
 
 			logs.Info("Building " + c.OsArch)
 			buildArgs := []string{"build"}
-			if *c.Vendor {
+			if *c.UseVendor {
 				buildArgs = append(buildArgs, "-mod", "vendor")
 			}
 			buildArgs = append(buildArgs, "-ldflags", "-s -w -X main.Version="+c.Version)

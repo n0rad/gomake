@@ -29,12 +29,6 @@ func NewProject() *Project {
 }
 
 func (p *Project) Init() error {
-	for i := range p.steps {
-		if err := p.steps[i].Init(); err != nil {
-			return errs.WithE(err, "Failed to init Step in project")
-		}
-	}
-
 	if _, ok := p.steps["clean"]; !ok {
 		p.steps["clean"] = &StepClean{}
 	}
@@ -42,7 +36,7 @@ func (p *Project) Init() error {
 		p.steps["build"] = &StepBuild{}
 	}
 	if _, ok := p.steps["quality"]; !ok {
-		p.steps["quality"] = &StepQuality{}
+		p.steps["quality"] = &StepCheck{}
 	}
 	if _, ok := p.steps["test"]; !ok {
 		p.steps["test"] = &StepTest{}
@@ -50,6 +44,12 @@ func (p *Project) Init() error {
 	//if _, ok := p.steps["release"]; ok {
 	//	p.steps["release"] = &StepRelease{}
 	//}
+
+	for i := range p.steps {
+		if err := p.steps[i].Init(); err != nil {
+			return errs.WithE(err, "Failed to init Step in project")
+		}
+	}
 
 	return nil
 }
