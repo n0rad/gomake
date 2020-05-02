@@ -29,15 +29,18 @@ func (c *StepCheck) Name() string {
 
 func (c *StepCheck) GetCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "check",
-		Short: "check code quality",
-		RunE: commandDurationWrapper(func(cmd *cobra.Command, args []string) error {
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		Use:           "check",
+		Short:         "check code quality",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			logs.Info("Checking")
 			// golint
 			if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {
 				return err
 			}
 			logs.Info("Running lint")
-			if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/')"); err != nil {
+			if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported'"); err != nil {
 				return errs.WithE(err, "misspell failed")
 			}
 
@@ -61,7 +64,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 				return err
 			}
 			logs.Info("Running ineffassign")
-			if err := ExecShell("./dist-tools/ineffassign -n $(go list ./... | grep -v '/vendor/')"); err != nil {
+			if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
 				return errs.WithE(err, "ineffassign failed")
 			}
 
@@ -70,12 +73,12 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 				return err
 			}
 			logs.Info("Running gocyclo")
-			if err := ExecShell("./dist-tools/gocyclo -over 15 ./..."); err != nil {
+			if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
 				return errs.WithE(err, "gocyclo failed")
 			}
 
-			return nil
-		}),
+			return c.project.processArgs(args)
+		},
 	}
 	return cmd
 }

@@ -71,9 +71,12 @@ func (c *StepBuild) Init(project *Project) error {
 
 func (c *StepBuild) GetCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "build",
-		Short: "build program",
-		RunE: commandDurationWrapper(func(cmd *cobra.Command, args []string) error {
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		Use:           "build",
+		Short:         "build program",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			logs.Info("Building")
 			distBindataPath := "dist/bindata"
 			if err := os.MkdirAll(distBindataPath, 0755); err != nil {
 				return errs.WithEF(err, data.WithField("path", distBindataPath), "Failed to create bindata dist directory")
@@ -124,14 +127,9 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					return errs.WithE(err, "upx failed")
 				}
 			}
-
-			return nil
-		}),
+			return c.project.processArgs(args)
+		},
 	}
-
-	//cmd.AddCommand(c.project.MustGetCommand("test"))
-	//cmd.AddCommand(c.project.MustGetCommand("check"))
-	//cmd.AddCommand(c.project.MustGetCommand("release"))
 
 	return cmd
 }

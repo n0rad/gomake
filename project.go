@@ -1,6 +1,7 @@
 package gomake
 
 import (
+	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
 	"github.com/n0rad/go-erlog/logs"
 	_ "github.com/n0rad/go-erlog/register"
@@ -14,7 +15,7 @@ func commandDurationWrapper(f func(cmd *cobra.Command, args []string) error) fun
 		start := time.Now()
 		err := f(cmd, args)
 		diff := time.Now().Sub(start)
-		logs.WithField("duration", diff.Round(time.Second).String()).Info(cmd.Use + " done")
+		logs.WithField("duration", diff.Round(time.Second).String()).Info("Done")
 		return err
 	}
 }
@@ -59,16 +60,16 @@ func (p *Project) Init() error {
 	if _, ok := p.steps["test"]; !ok {
 		p.steps["test"] = &StepTest{}
 	}
-	//if _, ok := p.steps["release"]; ok {
-	//	p.steps["release"] = &StepRelease{}
-	//}
+	if _, ok := p.steps["release"]; !ok {
+		p.steps["release"] = &StepRelease{}
+	}
 
 	if len(p.args) == 0 {
 		p.args = os.Args[1:]
 	}
-	//if len(p.args) == 0 {
-	//	p.args = []string{"clean", "build", "test", "quality"}
-	//}
+	if len(p.args) == 0 {
+		p.args = []string{"clean", "build", "test", "check"}
+	}
 
 	for i := range p.steps {
 		if err := p.steps[i].Init(p); err != nil {
@@ -79,14 +80,31 @@ func (p *Project) Init() error {
 	return nil
 }
 
+func (p Project) processArgs(args []string) error {
+	if len(args) > 0 {
+		step, ok := p.steps[args[0]]
+		if !ok {
+			return errs.WithF(data.WithField("command", args[0]), "subcommand not found")
+		}
+		command := step.GetCommand()
+		command.SetArgs(args[1:])
+		return command.Execute()
+	}
+	return nil
+}
+
 ///////////////////////
 
 func (p Project) MustExecute() {
-	rootCommand := p.GetCommand()
-	rootCommand.SetArgs(p.args)
-	if err := rootCommand.Execute(); err != nil {
+	if err := p.processArgs(p.args); err != nil {
 		logs.WithE(err).Fatal("Command failed")
 	}
+
+	//rootCommand := p.GetCommand()
+	//rootCommand.SetArgs(p.args)
+	//if err := rootCommand.Execute(); err != nil {
+	//	logs.WithE(err).Fatal("Command failed")
+	//}
 }
 
 func (p Project) GetCommand() *cobra.Command {
@@ -110,9 +128,9 @@ func (p Project) GetCommand() *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "L", "", "Set log level")
 
-	for name := range p.steps {
-		cmd.AddCommand(p.MustGetCommand(name))
-	}
+	//for name := range p.steps {
+	//	cmd.AddCommand(p.MustGetCommand(name))
+	//}
 
 	return cmd
 }
