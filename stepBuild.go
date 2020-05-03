@@ -138,5 +138,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 		},
 	}
 
+	RegisterLogLevelParser(cmd)
+
 	return cmd
 }

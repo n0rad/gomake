@@ -1,6 +1,7 @@
 package gomake
 
 import (
+	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
 	"strings"
 	"time"
@@ -31,4 +32,22 @@ func CommandDurationWrapper(cmd *cobra.Command, f func() error) error {
 		ColorPrintln(strings.Title(cmd.Use)+" : "+duration.String(), HBlue)
 	}
 	return err
+}
+
+func RegisterLogLevelParser(cmd *cobra.Command) {
+	var logLevel string
+
+	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if logLevel != "" {
+			level, err := logs.ParseLevel(logLevel)
+			if err != nil {
+				return err
+			}
+			logs.SetLevel(level)
+		}
+		return nil
+	}
+
+	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "L", "", "Set log level")
+
 }

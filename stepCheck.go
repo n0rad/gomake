@@ -58,8 +58,8 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 						return err
 					}
 					ColorPrintln("lint", Magenta)
-					if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported'"); err != nil {
-						return errs.WithE(err, "misspell failed")
+					if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported' || true"); err != nil {
+						return errs.WithE(err, "lint failed")
 					}
 				}
 
@@ -77,7 +77,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 						return err
 					}
 					ColorPrintln("misspell", Magenta)
-					if err := ExecShell("./dist-tools/misspell -source=text $(go list ./... | grep -v '/vendor/')"); err != nil {
+					if err := ExecShell("./dist-tools/misspell -source=text $(go list ./... | grep -v '/vendor/') || true"); err != nil {
 						return errs.WithE(err, "misspell failed")
 					}
 				}
@@ -88,7 +88,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 						return err
 					}
 					ColorPrintln("ineffassign", Magenta)
-					if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
+					if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*') || true"); err != nil {
 						return errs.WithE(err, "ineffassign failed")
 					}
 				}
@@ -99,7 +99,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 						return err
 					}
 					ColorPrintln("gocyclo", Magenta)
-					if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
+					if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*') || true"); err != nil {
 						return errs.WithE(err, "gocyclo failed")
 					}
 				}
@@ -110,6 +110,9 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 			return c.project.processArgs(args)
 		},
 	}
+
+	RegisterLogLevelParser(cmd)
+
 	return cmd
 }
 

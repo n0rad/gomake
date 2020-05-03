@@ -4,7 +4,6 @@ import (
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
 	"github.com/n0rad/go-erlog/logs"
-	_ "github.com/n0rad/go-erlog/register"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -98,33 +97,24 @@ func (p Project) MustExecute() {
 	//}
 }
 
-func (p Project) GetCommand() *cobra.Command {
-	var logLevel string
-	cmd := &cobra.Command{
-		Use:           "gomake",
-		Short:         "handle go project build lifecycle",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if logLevel != "" {
-				level, err := logs.ParseLevel(logLevel)
-				if err != nil {
-					return err
-				}
-				logs.SetLevel(level)
-			}
-			return nil
-		},
-	}
-
-	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "L", "", "Set log level")
-
-	//for name := range p.steps {
-	//	cmd.AddCommand(p.MustGetCommand(name))
-	//}
-
-	return cmd
-}
+//func (p Project) GetCommand() *cobra.Command {
+//	var logLevel string
+//	cmd := &cobra.Command{
+//		Use:           "gomake",
+//		Short:         "handle go project build lifecycle",
+//		SilenceErrors: true,
+//		SilenceUsage:  true,
+//		//PersistentPreRunE:
+//	}
+//
+//	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "L", "", "Set log level")
+//
+//	//for name := range p.steps {
+//	//	cmd.AddCommand(p.MustGetCommand(name))
+//	//}
+//
+//	return cmd
+//}
 
 ///////////////////////////////////////
 

@@ -49,6 +49,7 @@ func (c *StepClean) GetCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&tools, "tools", "t", false, "Also clean build tools")
+	RegisterLogLevelParser(cmd)
 
 	return cmd
 }

@@ -37,5 +37,8 @@ func (c *StepTest) GetCommand() *cobra.Command {
 			return c.project.processArgs(args)
 		},
 	}
+
+	RegisterLogLevelParser(cmd)
+
 	return cmd
 }

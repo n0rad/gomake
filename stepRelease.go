@@ -51,6 +51,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&token, "token", "t", "", "token")
 	cmd.Flags().StringVarP(&version, "version", "v", "", "version")
+	RegisterLogLevelParser(cmd)
 
 	return cmd
 }
