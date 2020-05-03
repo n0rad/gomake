@@ -9,7 +9,6 @@ import (
 	"os"
 )
 
-
 type Project struct {
 	args         []string
 	steps        map[string]Step
@@ -76,8 +75,10 @@ func (p Project) processArgs(args []string) error {
 		if !ok {
 			return errs.WithF(data.WithField("command", args[0]), "subcommand not found")
 		}
+
 		command := step.GetCommand()
 		command.SetArgs(args[1:])
+
 		return command.Execute()
 	}
 	return nil

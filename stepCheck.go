@@ -20,6 +20,22 @@ type StepCheck struct {
 
 func (c *StepCheck) Init(project *Project) error {
 	c.project = project
+	if c.Lint == nil {
+		c.Lint = True
+	}
+	if c.Vet == nil {
+		c.Vet = True
+	}
+	if c.Misspell == nil {
+		c.Misspell = True
+	}
+	if c.Ineffassign == nil {
+		c.Ineffassign = True
+	}
+	if c.Gocyclo == nil {
+		c.Gocyclo = True
+	}
+
 	return nil
 }
 
@@ -37,45 +53,55 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Checking", HGreen)
 				// golint
-				if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {
-					return err
-				}
-				ColorPrintln("lint", Magenta)
-				if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported'"); err != nil {
-					return errs.WithE(err, "misspell failed")
+				if *c.Lint {
+					if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {
+						return err
+					}
+					ColorPrintln("lint", Magenta)
+					if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported'"); err != nil {
+						return errs.WithE(err, "misspell failed")
+					}
 				}
 
 				// vet
-				ColorPrintln("vet", Magenta)
-				if err := Exec("go", "vet"); err != nil {
-					return errs.WithE(err, "vet failed")
+				if *c.Vet {
+					ColorPrintln("vet", Magenta)
+					if err := Exec("go", "vet"); err != nil {
+						return errs.WithE(err, "vet failed")
+					}
 				}
 
 				// misspell
-				if err := ensureTool("misspell", "github.com/client9/misspell/cmd/misspell"); err != nil {
-					return err
-				}
-				ColorPrintln("misspell", Magenta)
-				if err := ExecShell("./dist-tools/misspell -source=text $(go list ./... | grep -v '/vendor/')"); err != nil {
-					return errs.WithE(err, "misspell failed")
+				if *c.Misspell {
+					if err := ensureTool("misspell", "github.com/client9/misspell/cmd/misspell"); err != nil {
+						return err
+					}
+					ColorPrintln("misspell", Magenta)
+					if err := ExecShell("./dist-tools/misspell -source=text $(go list ./... | grep -v '/vendor/')"); err != nil {
+						return errs.WithE(err, "misspell failed")
+					}
 				}
 
 				// ineffassign
-				if err := ensureTool("ineffassign", "github.com/gordonklaus/ineffassign"); err != nil {
-					return err
-				}
-				ColorPrintln("ineffassign", Magenta)
-				if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
-					return errs.WithE(err, "ineffassign failed")
+				if *c.Ineffassign {
+					if err := ensureTool("ineffassign", "github.com/gordonklaus/ineffassign"); err != nil {
+						return err
+					}
+					ColorPrintln("ineffassign", Magenta)
+					if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
+						return errs.WithE(err, "ineffassign failed")
+					}
 				}
 
 				// gocyclo
-				if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo"); err != nil {
-					return err
-				}
-				ColorPrintln("gocyclo", Magenta)
-				if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
-					return errs.WithE(err, "gocyclo failed")
+				if *c.Gocyclo {
+					if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo"); err != nil {
+						return err
+					}
+					ColorPrintln("gocyclo", Magenta)
+					if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
+						return errs.WithE(err, "gocyclo failed")
+					}
 				}
 				return nil
 			}); err != nil {
@@ -94,7 +120,13 @@ func ensureTool(tool string, toolPackage string) error {
 			return errs.WithE(err, "Failed to create dist-tools directory")
 		}
 
-		return Exec("go", "build", "-mod", "vendor", "-o", "./dist-tools/"+tool, toolPackage)
+		args := []string{"build", "-o", "./dist-tools/" + tool}
+		if _, err := os.Stat("dist-tools/" + tool); err != nil {
+			args = append(args, "-mod", "vendor")
+		}
+		args = append(args, toolPackage)
+
+		return Exec("go", args...)
 	}
 
 	return nil

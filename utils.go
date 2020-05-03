@@ -11,7 +11,6 @@ var f = false
 var True = &t
 var False = &f
 
-
 //func CommandDurationWrapper(f func(cmd *cobra.Command, args []string) error) func(*cobra.Command, []string) error {
 //	return func(cmd *cobra.Command, args []string) error {
 //		start := time.Now()
