@@ -7,31 +7,8 @@ import (
 	_ "github.com/n0rad/go-erlog/register"
 	"github.com/spf13/cobra"
 	"os"
-	"strings"
-	"time"
 )
 
-//func commandDurationWrapper(f func(cmd *cobra.Command, args []string) error) func(*cobra.Command, []string) error {
-//	return func(cmd *cobra.Command, args []string) error {
-//		start := time.Now()
-//		err := f(cmd, args)
-//		diff := time.Now().Sub(start)
-//		duration := diff.Round(time.Second).String()
-//		ColorPrintln(cmd.Use+" duration : "+duration, HYellow)
-//		return err
-//	}
-//}
-
-func commandDurationWrapper(cmd *cobra.Command, f func() error) error {
-	start := time.Now()
-	err := f()
-	diff := time.Now().Sub(start)
-	duration := diff.Round(time.Second)
-	if duration > 0 {
-		ColorPrintln(strings.Title(cmd.Use)+" : "+duration.String(), HBlue)
-	}
-	return err
-}
 
 type Project struct {
 	args         []string

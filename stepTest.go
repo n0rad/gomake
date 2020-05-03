@@ -24,7 +24,7 @@ func (c *StepTest) GetCommand() *cobra.Command {
 		Use:           "test",
 		Short:         "run tests",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := commandDurationWrapper(cmd, func() error {
+			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Testing", HGreen)
 				err := ExecShell("go test $(go list ./... | grep -v '/vendor/')")
 				if err != nil {

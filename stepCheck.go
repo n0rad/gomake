@@ -34,7 +34,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 		Use:           "check",
 		Short:         "check code quality",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := commandDurationWrapper(cmd, func() error {
+			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Checking", HGreen)
 				// golint
 				if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {

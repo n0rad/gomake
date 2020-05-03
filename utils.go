@@ -1,26 +1,35 @@
 package gomake
 
 import (
-	"fmt"
-	"github.com/mgutz/ansi"
+	"github.com/spf13/cobra"
+	"strings"
+	"time"
 )
 
-type Color func(string) string
+var t = true
+var f = false
+var True = &t
+var False = &f
 
-var HGreen Color = ansi.ColorFunc("green+h")
-var HYellow Color = ansi.ColorFunc("yellow+h")
-var HCyan Color = ansi.ColorFunc("cyan+h")
-var HRed Color = ansi.ColorFunc("red+h")
-var HMagenta Color = ansi.ColorFunc("magenta+h")
-var HBlue Color = ansi.ColorFunc("blue+h")
 
-var Green Color = ansi.ColorFunc("green")
-var Yellow Color = ansi.ColorFunc("yellow")
-var Cyan Color = ansi.ColorFunc("cyan")
-var Red Color = ansi.ColorFunc("red")
-var Magenta Color = ansi.ColorFunc("magenta")
-var Blue Color = ansi.ColorFunc("blue")
+//func CommandDurationWrapper(f func(cmd *cobra.Command, args []string) error) func(*cobra.Command, []string) error {
+//	return func(cmd *cobra.Command, args []string) error {
+//		start := time.Now()
+//		err := f(cmd, args)
+//		diff := time.Now().Sub(start)
+//		duration := diff.Round(time.Second).String()
+//		ColorPrintln(cmd.Use+" duration : "+duration, HYellow)
+//		return err
+//	}
+//}
 
-func ColorPrintln(text string, color Color) {
-	fmt.Println(color(text))
+func CommandDurationWrapper(cmd *cobra.Command, f func() error) error {
+	start := time.Now()
+	err := f()
+	diff := time.Now().Sub(start)
+	duration := diff.Round(time.Second)
+	if duration > 0 {
+		ColorPrintln(strings.Title(cmd.Use)+" : "+duration.String(), HBlue)
+	}
+	return err
 }

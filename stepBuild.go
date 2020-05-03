@@ -48,13 +48,11 @@ func (c *StepBuild) Init(project *Project) error {
 	}
 
 	if c.Upx == nil {
-		upx := false
-		c.Upx = &upx
+		c.Upx = False
 	}
 
 	if c.UseVendor == nil {
-		vendor := true
-		c.UseVendor = &vendor
+		c.UseVendor = False
 	}
 
 	if c.Version == "" {
@@ -80,7 +78,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 		Use:           "build",
 		Short:         "build program",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := commandDurationWrapper(cmd, func() error {
+			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Building", HGreen)
 				distBindataPath := "dist/bindata"
 				if err := os.MkdirAll(distBindataPath, 0755); err != nil {

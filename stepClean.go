@@ -28,7 +28,7 @@ func (c *StepClean) GetCommand() *cobra.Command {
 		Use:           "clean",
 		Short:         "clean build directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := commandDurationWrapper(cmd, func() error {
+			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Cleaning", HGreen)
 				if err := os.RemoveAll("./dist/"); err != nil {
 					return err

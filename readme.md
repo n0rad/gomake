@@ -2,12 +2,10 @@
 
 Simple go project builder tool written in go.
 
-The idea of `gomake` is to have a fully self contain project build system so even build tools are reproductible.
-To achieve that, you have to `vendor` in your project gomake sources.
+The idea of `gomake` is to have a fully self contain project build system, so even build tools are versioned dependencies.
 
 All tools used to `build`, `test` and `check` quality will be save as a lib dependency of your project (not included in your app),
 so your project is fully standalone.
-
 
 ## Usage 
 
@@ -22,6 +20,7 @@ func main() {
 	gomake.ProjectBuilder().
 		WithStep(&gomake.StepBuild{
 			BinaryName: "my-app",
+            UseVendor: gomake.True,
 		}).
 		MustBuild().MustExecute()
 }

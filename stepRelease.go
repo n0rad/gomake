@@ -36,7 +36,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 		SilenceUsage:  true,
 		Use:           "release",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := commandDurationWrapper(cmd, func() error {
+			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Releasing", HGreen)
 
 				logs.WithField("token", token).WithField("version", version).Info("Release")
