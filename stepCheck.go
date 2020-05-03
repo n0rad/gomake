@@ -121,7 +121,7 @@ func ensureTool(tool string, toolPackage string) error {
 		}
 
 		args := []string{"build", "-o", "./dist-tools/" + tool}
-		if _, err := os.Stat("dist-tools/" + tool); err != nil {
+		if _, err := os.Stat("dist-tools/" + tool); err == nil {
 			args = append(args, "-mod", "vendor")
 		}
 		args = append(args, toolPackage)
