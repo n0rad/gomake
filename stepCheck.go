@@ -67,7 +67,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 				if *c.Vet {
 					ColorPrintln("vet", Magenta)
 					if err := Exec("go", "vet"); err != nil {
-						return errs.WithE(err, "vet failed")
+						//return errs.WithE(err, "vet failed")
 					}
 				}
 
