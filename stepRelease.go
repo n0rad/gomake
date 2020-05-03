@@ -8,6 +8,7 @@ import (
 type StepRelease struct {
 	project       *Project
 	OsArchRelease []string
+	Upx           bool
 }
 
 func (c *StepRelease) Init(project *Project) error {
@@ -35,10 +36,15 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 		SilenceUsage:  true,
 		Use:           "release",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logs.Info("Release")
+			if err := commandDurationWrapper(cmd, func() error {
+				ColorPrintln("Releasing", HGreen)
 
-			logs.WithField("token", token).WithField("version", version).Info("Release")
+				logs.WithField("token", token).WithField("version", version).Info("Release")
 
+				return nil
+			}); err != nil {
+				return err
+			}
 			return c.project.processArgs(args)
 		},
 	}

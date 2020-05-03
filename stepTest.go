@@ -1,7 +1,6 @@
 package gomake
 
 import (
-	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
 )
 
@@ -25,9 +24,14 @@ func (c *StepTest) GetCommand() *cobra.Command {
 		Use:           "test",
 		Short:         "run tests",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logs.Info("Testing")
-			err := ExecShell("go test $(go list ./... | grep -v '/vendor/')")
-			if err != nil {
+			if err := commandDurationWrapper(cmd, func() error {
+				ColorPrintln("Testing", HGreen)
+				err := ExecShell("go test $(go list ./... | grep -v '/vendor/')")
+				if err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
 				return err
 			}
 			return c.project.processArgs(args)

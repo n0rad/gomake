@@ -34,49 +34,53 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 		Use:           "check",
 		Short:         "check code quality",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logs.Info("Checking")
-			// golint
-			if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {
+			if err := commandDurationWrapper(cmd, func() error {
+				ColorPrintln("Checking", HGreen)
+				// golint
+				if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {
+					return err
+				}
+				ColorPrintln("lint", Magenta)
+				if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported'"); err != nil {
+					return errs.WithE(err, "misspell failed")
+				}
+
+				// vet
+				ColorPrintln("vet", Magenta)
+				if err := Exec("go", "vet"); err != nil {
+					return errs.WithE(err, "vet failed")
+				}
+
+				// misspell
+				if err := ensureTool("misspell", "github.com/client9/misspell/cmd/misspell"); err != nil {
+					return err
+				}
+				ColorPrintln("misspell", Magenta)
+				if err := ExecShell("./dist-tools/misspell -source=text $(go list ./... | grep -v '/vendor/')"); err != nil {
+					return errs.WithE(err, "misspell failed")
+				}
+
+				// ineffassign
+				if err := ensureTool("ineffassign", "github.com/gordonklaus/ineffassign"); err != nil {
+					return err
+				}
+				ColorPrintln("ineffassign", Magenta)
+				if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
+					return errs.WithE(err, "ineffassign failed")
+				}
+
+				// gocyclo
+				if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo"); err != nil {
+					return err
+				}
+				ColorPrintln("gocyclo", Magenta)
+				if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
+					return errs.WithE(err, "gocyclo failed")
+				}
+				return nil
+			}); err != nil {
 				return err
 			}
-			logs.Info("Running lint")
-			if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported'"); err != nil {
-				return errs.WithE(err, "misspell failed")
-			}
-
-			// vet
-			logs.Info("Running vet")
-			if err := Exec("go", "vet"); err != nil {
-				return errs.WithE(err, "vet failed")
-			}
-
-			// misspell
-			if err := ensureTool("misspell", "github.com/client9/misspell/cmd/misspell"); err != nil {
-				return err
-			}
-			logs.Info("Running misspell")
-			if err := ExecShell("./dist-tools/misspell -source=text $(go list ./... | grep -v '/vendor/')"); err != nil {
-				return errs.WithE(err, "misspell failed")
-			}
-
-			// ineffassign
-			if err := ensureTool("ineffassign", "github.com/gordonklaus/ineffassign"); err != nil {
-				return err
-			}
-			logs.Info("Running ineffassign")
-			if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
-				return errs.WithE(err, "ineffassign failed")
-			}
-
-			// gocyclo
-			if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo"); err != nil {
-				return err
-			}
-			logs.Info("Running gocyclo")
-			if err := ExecShell("./dist-tools/gocyclo -over 15 $(find . -name '*.go' ! -path './vendor/*')"); err != nil {
-				return errs.WithE(err, "gocyclo failed")
-			}
-
 			return c.project.processArgs(args)
 		},
 	}
