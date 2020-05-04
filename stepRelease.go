@@ -56,6 +56,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 				// build
 				build := c.project.steps["build"].(*StepBuild)
 				build.Upx = c.Upx
+				build.Programs = []Program{}
 				for _, osArch := range c.OsArchRelease {
 					build.Programs = append(build.Programs, Program{OsArch: osArch})
 				}
@@ -88,13 +89,8 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 
 				// compressing
 				for _, p := range build.Programs {
-					fileToWrite, err := os.OpenFile("./dist/"+c.project.name+"-"+p.OsArch+".tar.gz", os.O_CREATE|os.O_RDWR, os.FileMode(600))
-					if err != nil {
-						return errs.WithE(err, "Failed to open compressed release file") // TODO
-					}
-					fileToWrite.Close() // TODO
-					if err := CompressToTarGzDirectory("./dist/"+c.project.name+"-"+p.OsArch, fileToWrite); err != nil {
-						return errs.WithE(err, "Failed to compress dir to tar.gz")
+					if err := c.compressRelease(p); err != nil {
+						return errs.WithE(err, "Compression failed")
 					}
 				}
 
@@ -117,4 +113,16 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 	RegisterLogLevelParser(cmd)
 
 	return cmd
+}
+
+func (c StepRelease) compressRelease(p Program) error {
+	fileToWrite, err := os.OpenFile("./dist/"+c.project.name+"-"+p.OsArch+".tar.gz", os.O_CREATE|os.O_RDWR, os.FileMode(600))
+	if err != nil {
+		return errs.WithE(err, "Failed to open compressed release file") // TODO
+	}
+	defer fileToWrite.Close()
+	if err := CompressToTarGzDirectory("./dist/"+c.project.name+"-"+p.OsArch, fileToWrite); err != nil {
+		return errs.WithE(err, "Failed to compress dir to tar.gz")
+	}
+	return nil
 }
