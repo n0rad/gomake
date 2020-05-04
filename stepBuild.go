@@ -101,16 +101,6 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Building", HGreen)
 
-				ColorPrintln("fmt", Magenta)
-				if err := Exec("go", "fmt"); err != nil {
-					return err
-				}
-
-				ColorPrintln("fix", Magenta)
-				if err := Exec("go", "fix"); err != nil {
-					return err
-				}
-
 				distBindataPath := "dist/bindata"
 				if err := os.MkdirAll(distBindataPath, 0755); err != nil {
 					return errs.WithEF(err, data.WithField("path", distBindataPath), "Failed to create bindata dist directory")
@@ -131,6 +121,18 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 						return errs.WithE(err, "go-bindata failed")
 					}
 				}
+
+
+				ColorPrintln("fmt", Magenta)
+				if err := Exec("go", "fmt"); err != nil {
+					return err
+				}
+
+				ColorPrintln("fix", Magenta)
+				if err := Exec("go", "fix"); err != nil {
+					return err
+				}
+
 
 				for _, program := range c.Programs {
 					ColorPrintln(program.BinaryName+" : "+program.OsArch, Magenta)
