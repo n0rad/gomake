@@ -16,7 +16,6 @@ type Program struct {
 	BinaryName string
 	OsArch     string
 	Package    string
-	Upx        *bool
 
 	version string
 }
@@ -34,10 +33,6 @@ func (c *Program) Init(project *Project) error {
 		c.Package = "./"
 	}
 
-	if c.Upx == nil {
-		c.Upx = False
-	}
-
 	return nil
 }
 
@@ -45,6 +40,7 @@ type StepBuild struct {
 	Programs     []Program
 	Version      string
 	UseVendor    *bool
+	Upx          *bool
 	PreBuildHook func(StepBuild) error // prepare bindata files
 
 	project *Project
@@ -59,6 +55,10 @@ func (c *StepBuild) Init(project *Project) error {
 
 	if len(c.Programs) == 0 {
 		c.Programs = append(c.Programs, Program{})
+	}
+
+	if c.Upx == nil {
+		c.Upx = False
 	}
 
 	if c.UseVendor == nil {
@@ -122,7 +122,6 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					}
 				}
 
-
 				ColorPrintln("fmt", Magenta)
 				if err := Exec("go", "fmt"); err != nil {
 					return err
@@ -132,7 +131,6 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				if err := Exec("go", "fix"); err != nil {
 					return err
 				}
-
 
 				for _, program := range c.Programs {
 					ColorPrintln(program.BinaryName+" : "+program.OsArch, Magenta)
@@ -158,10 +156,10 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 						return errs.WithE(err, "go build failed")
 					}
 
-					if *program.Upx && packageName != "main" {
+					if *c.Upx && packageName != "main" {
 						return errs.With("Cannot upx a library package")
 					}
-					if *program.Upx {
+					if *c.Upx {
 						if std, err := ExecGetStd("which", "upx"); err != nil {
 							return errs.WithEF(err, data.WithField("std", std), "upx binary not in path")
 						}

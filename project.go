@@ -22,18 +22,18 @@ func NewProject() *Project {
 	return &p
 }
 
-func (p *Project) MustGetCommand(name string) *cobra.Command {
-	cmd, ok := p.commandCache[name]
-	if !ok {
-		step, ok := p.steps[name]
-		if !ok {
-			logs.WithField("step", name).Fatal("Cannot found step")
-		}
-		cmd = step.GetCommand()
-		p.commandCache[name] = cmd
-	}
-	return cmd
-}
+//func (p *Project) MustGetCommand(name string) *cobra.Command {
+//	cmd, ok := p.commandCache[name]
+//	if !ok {
+//		step, ok := p.steps[name]
+//		if !ok {
+//			logs.WithField("step", name).Fatal("Cannot found step")
+//		}
+//		cmd = step.GetCommand()
+//		p.commandCache[name] = cmd
+//	}
+//	return cmd
+//}
 
 func (p *Project) Init() error {
 	p.commandCache = make(map[string]*cobra.Command)
