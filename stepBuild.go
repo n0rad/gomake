@@ -127,7 +127,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 						return errs.WithE(err, "Failed to get package name")
 					}
 					if packageName == "main" {
-						buildArgs = append(buildArgs, "-o", "dist/"+program.BinaryName+"-"+program.OsArch+"/"+program.BinaryName)
+						buildArgs = append(buildArgs, "-o", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName)
 					}
 
 					if program.Package != "" {
