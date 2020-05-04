@@ -18,7 +18,7 @@ type Program struct {
 	Package    string
 	Upx        *bool
 
-	version    string
+	version string
 }
 
 func (c *Program) Init(project *Project) error {
@@ -42,9 +42,10 @@ func (c *Program) Init(project *Project) error {
 }
 
 type StepBuild struct {
-	Programs []Program
-	Version  string
-	UseVendor  *bool
+	Programs     []Program
+	Version      string
+	UseVendor    *bool
+	PreBuildHook func(StepBuild) error // prepare bindata files
 
 	project *Project
 }
@@ -99,10 +100,6 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Building", HGreen)
-				distBindataPath := "dist/bindata"
-				if err := os.MkdirAll(distBindataPath, 0755); err != nil {
-					return errs.WithEF(err, data.WithField("path", distBindataPath), "Failed to create bindata dist directory")
-				}
 
 				ColorPrintln("fmt", Magenta)
 				if err := Exec("go", "fmt"); err != nil {
@@ -112,6 +109,27 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				ColorPrintln("fix", Magenta)
 				if err := Exec("go", "fix"); err != nil {
 					return err
+				}
+
+				distBindataPath := "dist/bindata"
+				if err := os.MkdirAll(distBindataPath, 0755); err != nil {
+					return errs.WithEF(err, data.WithField("path", distBindataPath), "Failed to create bindata dist directory")
+				}
+
+				if c.PreBuildHook != nil {
+					if err := c.PreBuildHook(*c); err != nil {
+						return errs.WithE(err, "Pre build hook failed")
+					}
+				}
+
+				empty, _ := IsDirectoryEmpty("dist/bindata")
+				if !empty {
+					if err := ensureTool("go-bindata", "github.com/go-bindata/go-bindata/go-bindata"); err != nil {
+						return err
+					}
+					if err := Exec("./dist-tools/golint", "-nomemcopy", "-pkg", "dist", "-prefix", "dist/bindata", "-o", "dist/bindata.go", "dist/bindata/..."); err != nil {
+						return errs.WithE(err, "go-bindata failed")
+					}
 				}
 
 				for _, program := range c.Programs {

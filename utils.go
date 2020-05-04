@@ -3,6 +3,8 @@ package gomake
 import (
 	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
+	"io"
+	"os"
 	"strings"
 	"time"
 )
@@ -22,6 +24,20 @@ var False = &f
 //		return err
 //	}
 //}
+
+func IsDirectoryEmpty(name string) (bool, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err // Either not empty or error, suits both cases
+}
 
 func CommandDurationWrapper(cmd *cobra.Command, f func() error) error {
 	start := time.Now()
