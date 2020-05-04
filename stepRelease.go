@@ -120,12 +120,12 @@ func (c StepRelease) compressRelease(p Program) error {
 		return errs.WithE(err, "Failed to chdir to dist")
 	}
 	defer os.Chdir("../")
-	fileToWrite, err := os.OpenFile("./dist/"+c.project.name+"-"+p.OsArch+".tar.gz", os.O_CREATE|os.O_WRONLY, 0644)
+	fileToWrite, err := os.OpenFile(c.project.name+"-"+p.OsArch+".tar.gz", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return errs.WithE(err, "Failed to open compressed release file") // TODO
 	}
 	defer fileToWrite.Close()
-	if err := CompressToTarGzDirectory("./dist/"+c.project.name+"-"+p.OsArch, fileToWrite); err != nil {
+	if err := CompressToTarGzDirectory(c.project.name+"-"+p.OsArch, fileToWrite); err != nil {
 		return errs.WithE(err, "Failed to compress dir to tar.gz")
 	}
 	return nil
