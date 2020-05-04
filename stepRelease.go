@@ -116,7 +116,11 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 }
 
 func (c StepRelease) compressRelease(p Program) error {
-	fileToWrite, err := os.OpenFile("./dist/"+c.project.name+"-"+p.OsArch+".tar.gz", os.O_CREATE|os.O_RDWR, os.FileMode(600))
+	if err := os.Chdir("./dist"); err != nil {
+		return errs.WithE(err, "Failed to chdir to dist")
+	}
+	defer os.Chdir("../")
+	fileToWrite, err := os.OpenFile("./dist/"+c.project.name+"-"+p.OsArch+".tar.gz", os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return errs.WithE(err, "Failed to open compressed release file") // TODO
 	}
