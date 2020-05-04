@@ -1,15 +1,12 @@
 package gomake
 
 import (
-	"fmt"
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
-	"github.com/n0rad/hard-disk-manager/pkg/runner"
 	"github.com/spf13/cobra"
 	"os"
 	"runtime"
 	"strings"
-	"time"
 )
 
 type Program struct {
@@ -66,16 +63,11 @@ func (c *StepBuild) Init(project *Project) error {
 	}
 
 	if c.Version == "" {
-		githash, err := runner.Local.ExecGetStdout("git", "rev-parse", "--short", "HEAD")
+		v, err := GeneratedVersion()
 		if err != nil {
-			return errs.WithE(err, "Failed to get git commit hash")
+			return errs.WithE(err, "Failed to generate version")
 		}
-		now := time.Now()
-		c.Version = fmt.Sprintf("%s.%s.%s-%s",
-			"1",
-			now.Format("20060102"),
-			strings.TrimLeft(now.Format("150405"), "0"),
-			githash)
+		c.Version = v
 	}
 
 	for i := range c.Programs {

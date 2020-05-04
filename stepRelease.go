@@ -10,8 +10,8 @@ type StepRelease struct {
 	project         *Project
 	OsArchRelease   []string
 	Upx             *bool
+	Version         string
 	PostReleaseHook func(StepRelease) error // upload
-
 }
 
 func (c *StepRelease) Init(project *Project) error {
@@ -25,6 +25,14 @@ func (c *StepRelease) Init(project *Project) error {
 
 	if c.Upx == nil {
 		c.Upx = False
+	}
+
+	if c.Version == "" {
+		v, err := GeneratedVersion()
+		if err != nil {
+			return errs.WithE(err, "Failed to generate version")
+		}
+		c.Version = v
 	}
 
 	return nil
@@ -60,6 +68,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 				// build
 				build := c.project.steps["build"].(*StepBuild)
 				build.Upx = c.Upx
+				build.Version = c.Version
 				build.Programs = []Program{}
 				for _, osArch := range c.OsArchRelease {
 					build.Programs = append(build.Programs, Program{OsArch: osArch})

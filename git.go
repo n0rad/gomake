@@ -1,6 +1,11 @@
 package gomake
 
-import "github.com/n0rad/go-erlog/errs"
+import (
+	"fmt"
+	"github.com/n0rad/go-erlog/errs"
+	"strings"
+	"time"
+)
 
 func IsGitWorkTreeClean() error {
 	if err := Exec("git", "update-index", "-q", "--ignore-submodules", "--refresh"); err != nil {
@@ -24,4 +29,18 @@ func IsGitWorkTreeClean() error {
 	}
 
 	return nil
+}
+
+func GeneratedVersion() (string, error) {
+	githash, err := ExecGetStdout("git", "rev-parse", "--short", "HEAD")
+	if err != nil {
+		return "", errs.WithE(err, "Failed to get git commit hash")
+	}
+	now := time.Now()
+	return fmt.Sprintf("%s.%s.%s-%s",
+		"1",
+		now.Format("20060102"),
+		strings.TrimLeft(now.Format("150405"), "0"),
+		githash), nil
+
 }
