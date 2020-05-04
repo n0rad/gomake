@@ -34,6 +34,10 @@ func (c *StepRelease) Name() string {
 	return "release"
 }
 
+func (c *StepRelease) Project() *Project {
+	return c.project
+}
+
 func (c *StepRelease) GetCommand() *cobra.Command {
 	var token string
 	var version string
