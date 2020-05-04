@@ -134,25 +134,30 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 
 				for _, program := range c.Programs {
 					ColorPrintln(program.BinaryName+" : "+program.OsArch, Magenta)
-					buildArgs := []string{"build"}
+					osArchSplit := strings.Split(program.OsArch, "-")
+					buildArgs := []string{"GOOS=" + osArchSplit[0], "GOARCH=" + osArchSplit[1], "go", "build"}
 					if *c.UseVendor {
 						buildArgs = append(buildArgs, "-mod", "vendor")
 					}
-					buildArgs = append(buildArgs, "-ldflags", "-s -w -X main.Version="+c.Version)
+					buildArgs = append(buildArgs, "-ldflags", "'-s -w -X main.Version="+c.Version+"'")
 
 					packageName, err := ExecGetStdout("go", "list", "-f", "{{.Name}}", program.Package)
 					if err != nil {
 						return errs.WithE(err, "Failed to get package name")
 					}
 					if packageName == "main" {
-						buildArgs = append(buildArgs, "-o", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName)
+						if strings.HasPrefix(program.OsArch, "windows") {
+							buildArgs = append(buildArgs, "-o", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName+".exe")
+						} else {
+							buildArgs = append(buildArgs, "-o", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName)
+						}
 					}
 
 					if program.Package != "" {
 						buildArgs = append(buildArgs, program.Package)
 					}
 
-					if err := Exec("go", buildArgs...); err != nil {
+					if err := ExecShell(strings.Join(buildArgs, " ")); err != nil {
 						return errs.WithE(err, "go build failed")
 					}
 
