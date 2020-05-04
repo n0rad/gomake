@@ -15,10 +15,10 @@ import (
 type Program struct {
 	BinaryName string
 	OsArch     string
-	UseVendor  *bool
-	version    string
 	Package    string
 	Upx        *bool
+
+	version    string
 }
 
 func (c *Program) Init(project *Project) error {
@@ -38,15 +38,13 @@ func (c *Program) Init(project *Project) error {
 		c.Upx = False
 	}
 
-	if c.UseVendor == nil {
-		c.UseVendor = False
-	}
 	return nil
 }
 
 type StepBuild struct {
 	Programs []Program
 	Version  string
+	UseVendor  *bool
 
 	project *Project
 }
@@ -60,6 +58,10 @@ func (c *StepBuild) Init(project *Project) error {
 
 	if len(c.Programs) == 0 {
 		c.Programs = append(c.Programs, Program{})
+	}
+
+	if c.UseVendor == nil {
+		c.UseVendor = False
 	}
 
 	if c.Version == "" {
@@ -113,9 +115,9 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				}
 
 				for _, program := range c.Programs {
-					ColorPrintln(program.BinaryName+"-"+program.OsArch, Magenta)
+					ColorPrintln(program.BinaryName+" : "+program.OsArch, Magenta)
 					buildArgs := []string{"build"}
-					if *program.UseVendor {
+					if *c.UseVendor {
 						buildArgs = append(buildArgs, "-mod", "vendor")
 					}
 					buildArgs = append(buildArgs, "-ldflags", "-s -w -X main.Version="+c.Version)
