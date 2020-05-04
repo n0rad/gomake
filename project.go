@@ -6,9 +6,11 @@ import (
 	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
 	"os"
+	"path"
 )
 
 type Project struct {
+	name         string
 	args         []string
 	steps        map[string]Step
 	commandCache map[string]*cobra.Command
@@ -57,6 +59,14 @@ func (p *Project) Init() error {
 	}
 	if len(p.args) == 0 {
 		p.args = []string{"clean", "build", "test", "check"}
+	}
+
+	if p.name == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			return errs.WithE(err, "Failed to get working directory to build")
+		}
+		p.name = path.Base(wd)
 	}
 
 	for i := range p.steps {
@@ -134,6 +144,11 @@ func (p Builder) MustBuild() *Project {
 		logs.WithE(err).Fatal("Failed to prepare project")
 	}
 	return project
+}
+
+func (p Builder) WithName(name string) Builder {
+	p.name = name
+	return p
 }
 
 func (p Builder) WithStep(step Step) Builder {

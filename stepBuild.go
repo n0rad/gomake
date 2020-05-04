@@ -7,36 +7,23 @@ import (
 	"github.com/n0rad/hard-disk-manager/pkg/runner"
 	"github.com/spf13/cobra"
 	"os"
-	"path"
 	"runtime"
 	"strings"
 	"time"
 )
 
-type StepBuild struct {
+type Program struct {
 	BinaryName string
 	OsArch     string
 	UseVendor  *bool
-	Version    string
+	version    string
 	Package    string
 	Upx        *bool
-
-	project     *Project
-	packageName string
 }
 
-func (c *StepBuild) Name() string {
-	return "build"
-}
-
-func (c *StepBuild) Init(project *Project) error {
-	c.project = project
+func (c *Program) Init(project *Project) error {
 	if c.BinaryName == "" {
-		wd, err := os.Getwd()
-		if err != nil {
-			return errs.WithE(err, "Failed to get working directory to build")
-		}
-		c.BinaryName = path.Base(wd)
+		c.BinaryName = project.name
 	}
 
 	if len(c.OsArch) == 0 {
@@ -54,6 +41,26 @@ func (c *StepBuild) Init(project *Project) error {
 	if c.UseVendor == nil {
 		c.UseVendor = False
 	}
+	return nil
+}
+
+type StepBuild struct {
+	Programs []Program
+	Version  string
+
+	project *Project
+}
+
+func (c *StepBuild) Name() string {
+	return "build"
+}
+
+func (c *StepBuild) Init(project *Project) error {
+	c.project = project
+
+	if len(c.Programs) == 0 {
+		c.Programs = append(c.Programs, Program{})
+	}
 
 	if c.Version == "" {
 		githash, err := runner.Local.ExecGetStdout("git", "rev-parse", "--short", "HEAD")
@@ -66,6 +73,16 @@ func (c *StepBuild) Init(project *Project) error {
 			now.Format("20060102"),
 			strings.TrimLeft(now.Format("150405"), "0"),
 			githash)
+	}
+
+	for i := range c.Programs {
+		c.Programs[i].version = c.Version
+	}
+
+	for i := range c.Programs {
+		if err := c.Programs[i].Init(c.project); err != nil {
+			return errs.WithE(err, "Failed to init a program")
+		}
 	}
 
 	return nil
@@ -95,41 +112,45 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					return err
 				}
 
-				ColorPrintln(c.OsArch, Magenta)
-				buildArgs := []string{"build"}
-				if *c.UseVendor {
-					buildArgs = append(buildArgs, "-mod", "vendor")
-				}
-				buildArgs = append(buildArgs, "-ldflags", "-s -w -X main.Version="+c.Version)
+				for _, program := range c.Programs {
+					ColorPrintln(program.BinaryName+"-"+program.OsArch, Magenta)
+					buildArgs := []string{"build"}
+					if *program.UseVendor {
+						buildArgs = append(buildArgs, "-mod", "vendor")
+					}
+					buildArgs = append(buildArgs, "-ldflags", "-s -w -X main.Version="+c.Version)
 
-				packageName, err := ExecGetStdout("go", "list", "-f", "{{.Name}}", c.Package)
-				if err != nil {
-					return errs.WithE(err, "Failed to get package name")
-				}
-				if packageName == "main" {
-					buildArgs = append(buildArgs, "-o", "dist/"+c.BinaryName+"-"+c.OsArch+"/"+c.BinaryName)
-				}
-
-				if c.Package != "" {
-					buildArgs = append(buildArgs, c.Package)
-				}
-
-				if err := Exec("go", buildArgs...); err != nil {
-					return errs.WithE(err, "go build failed")
-				}
-
-				if *c.Upx && packageName != "main" {
-					return errs.With("Cannot upx a library package")
-				}
-				if *c.Upx {
-					if std, err := ExecGetStd("which", "upx"); err != nil {
-						return errs.WithEF(err, data.WithField("std", std), "upx binary not in path")
+					packageName, err := ExecGetStdout("go", "list", "-f", "{{.Name}}", program.Package)
+					if err != nil {
+						return errs.WithE(err, "Failed to get package name")
+					}
+					if packageName == "main" {
+						buildArgs = append(buildArgs, "-o", "dist/"+program.BinaryName+"-"+program.OsArch+"/"+program.BinaryName)
 					}
 
-					if err := Exec("upx", "--ultra-brute", "dist/"+c.BinaryName+"-"+c.OsArch+"/"+c.BinaryName); err != nil {
-						return errs.WithE(err, "upx failed")
+					if program.Package != "" {
+						buildArgs = append(buildArgs, program.Package)
 					}
+
+					if err := Exec("go", buildArgs...); err != nil {
+						return errs.WithE(err, "go build failed")
+					}
+
+					if *program.Upx && packageName != "main" {
+						return errs.With("Cannot upx a library package")
+					}
+					if *program.Upx {
+						if std, err := ExecGetStd("which", "upx"); err != nil {
+							return errs.WithEF(err, data.WithField("std", std), "upx binary not in path")
+						}
+
+						if err := Exec("upx", "--ultra-brute", "dist/"+program.BinaryName+"-"+program.OsArch+"/"+program.BinaryName); err != nil {
+							return errs.WithE(err, "upx failed")
+						}
+					}
+
 				}
+
 				return nil
 			}); err != nil {
 				return err
