@@ -163,7 +163,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 							return errs.WithEF(err, fields.WithField("std", std), "upx binary not in path")
 						}
 
-						if err := Exec("upx", "--ultra-brute", "dist/"+program.BinaryName+"-"+program.OsArch+"/"+program.BinaryName); err != nil {
+						if err := Exec("upx", "--ultra-brute", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName); err != nil {
 							return errs.WithEF(err, fields, "upx failed")
 						}
 					}

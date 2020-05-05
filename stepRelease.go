@@ -69,9 +69,17 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 				build := c.project.steps["build"].(*StepBuild)
 				build.Upx = c.Upx
 				build.Version = c.Version
+				programs := build.Programs
 				build.Programs = []Program{}
+
 				for _, osArch := range c.OsArchRelease {
-					build.Programs = append(build.Programs, Program{OsArch: osArch})
+					for _, program := range programs {
+						build.Programs = append(build.Programs, Program{
+							BinaryName: program.BinaryName,
+							Package: program.Package,
+							OsArch: osArch,
+						})
+					}
 				}
 				if err := build.Init(c.project); err != nil {
 					return errs.WithE(err, "Failed to re-init build for release")
