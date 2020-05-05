@@ -1,9 +1,12 @@
 package gomake
 
 import (
+	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
+	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 type StepRelease struct {
@@ -11,6 +14,7 @@ type StepRelease struct {
 	OsArchRelease   []string
 	Upx             *bool
 	Version         string
+	Token           string
 	PostReleaseHook func(StepRelease) error // upload
 }
 
@@ -58,6 +62,13 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Releasing", HGreen)
 
+				if token != "" {
+					c.Token = token
+				}
+				if version != "" {
+					c.Version = version
+				}
+
 				// clean
 				cleanCommand := c.project.steps["clean"].GetCommand()
 				cleanCommand.SetArgs([]string{})
@@ -76,8 +87,8 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 					for _, program := range programs {
 						build.Programs = append(build.Programs, Program{
 							BinaryName: program.BinaryName,
-							Package: program.Package,
-							OsArch: osArch,
+							Package:    program.Package,
+							OsArch:     osArch,
 						})
 					}
 				}
@@ -104,9 +115,9 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 					return errs.WithE(err, "Cannot release, check failed")
 				}
 
-				if err := IsGitWorkTreeClean(); err != nil {
-					return errs.WithE(err, "git repository is not clean")
-				}
+				//if err := IsGitWorkTreeClean(); err != nil {
+				//	return errs.WithE(err, "git repository is not clean")
+				//}
 
 				// compressing
 				for _, p := range build.Programs {
@@ -119,6 +130,10 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 					if err := c.PostReleaseHook(*c); err != nil {
 						return errs.WithE(err, "Post release hook failed")
 					}
+				}
+
+				if err := c.releaseToGithub(); err != nil {
+					return err
 				}
 
 				return nil
@@ -134,6 +149,42 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 	RegisterLogLevelParser(cmd)
 
 	return cmd
+}
+
+func (c StepRelease) releaseToGithub() error {
+	gitRemoteUrl, err := ExecShellGetStdout(`git config --get remote.origin.url | sed -n 's/.*@\(.*\)\.git/\1/p' | tr : /`)
+	if err != nil {
+		return errs.WithE(err, "Failed to get git remote origin url ")
+	}
+	if !strings.Contains(gitRemoteUrl, "github") {
+		return nil
+	}
+
+	if c.Token == "" {
+		return errs.With("github token is not set")
+	}
+
+	gitRemoteUrlSplit := strings.SplitN(gitRemoteUrl, "/", 2)
+	if len(gitRemoteUrlSplit) < 2 {
+		return errs.WithF(data.WithField("url", gitRemoteUrl), "Invalid github remote url")
+	}
+	githubRepoPath := gitRemoteUrlSplit[1]
+
+	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token `+ c.Token +`" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"master\",\"name\": \"v` + c.Version + `\",\"body\": \"Release of version ` + c.Version + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
+	if err != nil {
+		return errs.WithE(err, "Failed to get github file post url")
+	}
+	posturl = strings.SplitN(posturl, "{", 2)[0]
+
+	for _, osArch := range c.OsArchRelease {
+		releaseFile := c.project.name + "-" + osArch + ".tar.gz"
+		logs.WithField("file", releaseFile).Info("Uploading file")
+
+		if err := Exec("curl", "-H", "Authorization: token "+c.Token, "-i", "-X", "POST", "-H", "Content-Type: application/x-gzip", "--data-binary", "@dist/"+releaseFile, posturl+"?name="+releaseFile+"&label="+releaseFile); err != nil {
+			return errs.WithEF(err, data.WithField("file", releaseFile), "Failed to upload file")
+		}
+	}
+	return nil
 }
 
 func (c StepRelease) compressRelease(p Program) error {

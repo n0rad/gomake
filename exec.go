@@ -59,6 +59,11 @@ func ExecStdinStdoutStderr(stdin io.Reader, stdout io.Writer, stderr io.Writer, 
 
 /////
 
+func ExecShellGetStdout(cmd string) (string, error) {
+	stdout, _, err := ExecGetStdoutStderr("bash", "-o", "pipefail", "-c", cmd)
+	return stdout, err
+}
+
 func ExecShellGetStd(cmd string) (string, error) {
 	stdout, stderr, err := ExecGetStdoutStderr("bash", "-o", "pipefail", "-c", cmd)
 	stdout += stderr
