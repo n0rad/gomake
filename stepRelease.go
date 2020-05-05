@@ -115,9 +115,9 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 					return errs.WithE(err, "Cannot release, check failed")
 				}
 
-				//if err := IsGitWorkTreeClean(); err != nil {
-				//	return errs.WithE(err, "git repository is not clean")
-				//}
+				if err := IsGitWorkTreeClean(); err != nil {
+					return errs.WithE(err, "git repository is not clean")
+				}
 
 				// compressing
 				for _, p := range build.Programs {
