@@ -125,6 +125,8 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				}
 
 				for _, program := range c.Programs {
+					fields := data.WithField("package", program.Package)
+
 					ColorPrintln(program.BinaryName+" : "+program.OsArch, Magenta)
 					osArchSplit := strings.Split(program.OsArch, "-")
 					buildArgs := []string{"GOOS=" + osArchSplit[0], "GOARCH=" + osArchSplit[1], "go", "build"}
@@ -135,7 +137,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 
 					packageName, err := ExecGetStdout("go", "list", "-f", "{{.Name}}", program.Package)
 					if err != nil {
-						return errs.WithE(err, "Failed to get package name")
+						return errs.WithEF(err, fields, "Failed to get package name")
 					}
 					if packageName == "main" {
 						if strings.HasPrefix(program.OsArch, "windows") {
@@ -150,19 +152,19 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					}
 
 					if err := ExecShell(strings.Join(buildArgs, " ")); err != nil {
-						return errs.WithE(err, "go build failed")
+						return errs.WithEF(err, fields,"go build failed")
 					}
 
 					if *c.Upx && packageName != "main" {
-						return errs.With("Cannot upx a library package")
+						return errs.WithF(fields, "Cannot upx a library package")
 					}
 					if *c.Upx {
 						if std, err := ExecGetStd("which", "upx"); err != nil {
-							return errs.WithEF(err, data.WithField("std", std), "upx binary not in path")
+							return errs.WithEF(err, fields.WithField("std", std), "upx binary not in path")
 						}
 
 						if err := Exec("upx", "--ultra-brute", "dist/"+program.BinaryName+"-"+program.OsArch+"/"+program.BinaryName); err != nil {
-							return errs.WithE(err, "upx failed")
+							return errs.WithEF(err, fields, "upx failed")
 						}
 					}
 
