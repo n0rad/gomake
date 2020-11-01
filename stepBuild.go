@@ -13,6 +13,7 @@ type Program struct {
 	BinaryName string
 	OsArch     string
 	Package    string
+	Cgo        *bool
 
 	version string
 }
@@ -72,6 +73,9 @@ func (c *StepBuild) Init(project *Project) error {
 
 	for i := range c.Programs {
 		c.Programs[i].version = c.Version
+		if c.Programs[i].Cgo == nil {
+			c.Programs[i].Cgo = False
+		}
 	}
 
 	for i := range c.Programs {
@@ -129,7 +133,12 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 
 					ColorPrintln(program.BinaryName+" : "+program.OsArch, Magenta)
 					osArchSplit := strings.Split(program.OsArch, "-")
-					buildArgs := []string{"GOOS=" + osArchSplit[0], "GOARCH=" + osArchSplit[1], "go", "build"}
+					buildArgs := []string{"GOOS=" + osArchSplit[0], "GOARCH=" + osArchSplit[1]}
+					if !*program.Cgo {
+						buildArgs = append(buildArgs, "CGO_ENABLED=0")
+					}
+
+					buildArgs = append(buildArgs, "go", "build")
 					if *c.UseVendor {
 						buildArgs = append(buildArgs, "-mod", "vendor")
 					}
