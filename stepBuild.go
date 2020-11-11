@@ -119,12 +119,12 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				}
 
 				ColorPrintln("fmt", Magenta)
-				if err := Exec("go", "fmt"); err != nil {
+				if err := Exec("go", "fmt", "./..."); err != nil {
 					return err
 				}
 
 				ColorPrintln("fix", Magenta)
-				if err := Exec("go", "fix"); err != nil {
+				if err := Exec("go", "fix", "./..."); err != nil {
 					return err
 				}
 
