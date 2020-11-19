@@ -62,6 +62,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Releasing", HGreen)
 
+				c.Token = os.Getenv("GITHUB_TOKEN")
 				if token != "" {
 					c.Token = token
 				}
