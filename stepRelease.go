@@ -155,10 +155,10 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 func (c StepRelease) releaseToGithub() error {
 	gitRemoteUrl, err := ExecShellGetStdout(`git config --get remote.origin.url | sed -n 's/.*@\(.*\)\.git/\1/p' | tr : /`)
 	if err != nil {
-		return errs.WithE(err, "Failed to get git remote origin url ")
+		return errs.WithE(err, "Failed to get git remote origin url")
 	}
 	if !strings.Contains(gitRemoteUrl, "github") {
-		return nil
+		return errs.WithF(data.WithField("remoteUrl", gitRemoteUrl), "Remote is not a github url")
 	}
 
 	if c.Token == "" {
