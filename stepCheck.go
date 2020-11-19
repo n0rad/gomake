@@ -95,7 +95,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 
 				// gocyclo
 				if *c.Gocyclo {
-					if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo"); err != nil {
+					if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo/cmd/gocyclo"); err != nil {
 						return err
 					}
 					ColorPrintln("gocyclo", Magenta)

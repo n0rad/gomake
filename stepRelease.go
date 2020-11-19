@@ -171,7 +171,7 @@ func (c StepRelease) releaseToGithub() error {
 	}
 	githubRepoPath := gitRemoteUrlSplit[1]
 
-	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token `+ c.Token +`" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"master\",\"name\": \"v` + c.Version + `\",\"body\": \"Release of version ` + c.Version + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
+	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token ` + c.Token + `" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"master\",\"name\": \"v` + c.Version + `\",\"body\": \"Release of version ` + c.Version + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
 	if err != nil {
 		return errs.WithE(err, "Failed to get github file post url")
 	}

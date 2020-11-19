@@ -161,7 +161,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					}
 
 					if err := ExecShell(strings.Join(buildArgs, " ")); err != nil {
-						return errs.WithEF(err, fields,"go build failed")
+						return errs.WithEF(err, fields, "go build failed")
 					}
 
 					if *c.Upx && packageName != "main" {
