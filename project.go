@@ -95,8 +95,13 @@ func (p Project) processArgs(args []string) error {
 
 ///////////////////////
 
+
+func (p Project) Execute() error {
+	return p.processArgs(p.args)
+}
+
 func (p Project) MustExecute() {
-	if err := p.processArgs(p.args); err != nil {
+	if err := p.Execute(); err != nil {
 		logs.WithE(err).Fatal("Command failed")
 	}
 
