@@ -54,7 +54,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 				ColorPrintln("Checking", HGreen)
 				// golint
 				if *c.Lint {
-					if err := ensureTool("golint", "golang.org/x/lint/golint"); err != nil {
+					if err := EnsureTool("golint", "golang.org/x/lint/golint"); err != nil {
 						return err
 					}
 					ColorPrintln("lint", Magenta)
@@ -73,7 +73,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 
 				// misspell
 				if *c.Misspell {
-					if err := ensureTool("misspell", "github.com/client9/misspell/cmd/misspell"); err != nil {
+					if err := EnsureTool("misspell", "github.com/client9/misspell/cmd/misspell"); err != nil {
 						return err
 					}
 					ColorPrintln("misspell", Magenta)
@@ -84,7 +84,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 
 				// ineffassign
 				if *c.Ineffassign {
-					if err := ensureTool("ineffassign", "github.com/gordonklaus/ineffassign"); err != nil {
+					if err := EnsureTool("ineffassign", "github.com/gordonklaus/ineffassign"); err != nil {
 						return err
 					}
 					ColorPrintln("ineffassign", Magenta)
@@ -95,7 +95,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 
 				// gocyclo
 				if *c.Gocyclo {
-					if err := ensureTool("gocyclo", "github.com/fzipp/gocyclo/cmd/gocyclo"); err != nil {
+					if err := EnsureTool("gocyclo", "github.com/fzipp/gocyclo/cmd/gocyclo"); err != nil {
 						return err
 					}
 					ColorPrintln("gocyclo", Magenta)
@@ -116,7 +116,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 	return cmd
 }
 
-func ensureTool(tool string, toolPackage string) error {
+func EnsureTool(tool string, toolPackage string) error {
 	if _, err := os.Stat("dist-tools/" + tool); err != nil {
 		logs.WithEF(err, data.WithField("tool", tool)).Warn("Building tool")
 		if err := os.MkdirAll("./dist-tools", 0755); err != nil {

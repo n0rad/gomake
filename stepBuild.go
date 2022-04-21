@@ -110,7 +110,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 
 				empty, _ := IsDirectoryEmpty("dist/bindata")
 				if !empty {
-					if err := ensureTool("go-bindata", "github.com/go-bindata/go-bindata/go-bindata"); err != nil {
+					if err := EnsureTool("go-bindata", "github.com/go-bindata/go-bindata/go-bindata"); err != nil {
 						return err
 					}
 					if err := Exec("./dist-tools/go-bindata", "-nomemcopy", "-pkg", "dist", "-prefix", "dist/bindata", "-o", "dist/bindata.go", "dist/bindata/..."); err != nil {
