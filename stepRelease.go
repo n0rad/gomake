@@ -15,6 +15,7 @@ type StepRelease struct {
 	Upx             *bool
 	Version         string
 	Token           string
+	GithubRelease   bool
 	PostReleaseHook func(StepRelease) error // upload
 }
 
@@ -133,8 +134,10 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 					}
 				}
 
-				if err := c.releaseToGithub(); err != nil {
-					return err
+				if c.GithubRelease {
+					if err := c.releaseToGithub(); err != nil {
+						return err
+					}
 				}
 
 				return nil
