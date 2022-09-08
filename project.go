@@ -95,7 +95,6 @@ func (p Project) processArgs(args []string) error {
 
 ///////////////////////
 
-
 func (p Project) Execute() error {
 	return p.processArgs(p.args)
 }
