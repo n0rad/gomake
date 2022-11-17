@@ -31,16 +31,22 @@ func IsGitWorkTreeClean() error {
 	return nil
 }
 
-func GeneratedVersion() (string, error) {
+func GeneratedVersionTime(now time.Time) (string, error) {
 	githash, err := ExecGetStdout("git", "rev-parse", "--short", "HEAD")
 	if err != nil {
 		return "", errs.WithE(err, "Failed to get git commit hash")
 	}
-	now := time.Now()
-	return fmt.Sprintf("%s.%s.%s-%s",
+	hms := strings.TrimLeft(now.Format("150405"), "0")
+	if hms == "" {
+		hms = "0"
+	}
+	return fmt.Sprintf("%s.%s.%s-H%s",
 		"1",
 		now.Format("20060102"),
-		strings.TrimLeft(now.Format("150405"), "0"),
+		hms,
 		githash), nil
+}
 
+func GeneratedVersion() (string, error) {
+	return GeneratedVersionTime(time.Now())
 }

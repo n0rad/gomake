@@ -10,6 +10,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/n0rad/go-erlog v0.0.0-20190510152055-0a033e8086d8
 	github.com/spf13/cobra v1.0.0
+	github.com/stretchr/testify v1.2.2
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 )
 
