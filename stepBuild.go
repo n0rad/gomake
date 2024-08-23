@@ -124,7 +124,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				}
 
 				ColorPrintln("fix", Magenta)
-				if err := ExecShell("go tool fix $(go list -e -f '{{.Dir}}' ./...)"); err != nil {
+				if err := ExecShell("go fix ./..."); err != nil {
 					return err
 				}
 
