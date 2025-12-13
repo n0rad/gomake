@@ -16,6 +16,7 @@ type StepRelease struct {
 	Upx             *bool
 	Version         string
 	Token           string
+	DefaultBranch   string // for cases where detection fails
 	GithubRelease   bool
 	PostReleaseHook func(StepRelease) error // upload
 }
@@ -185,7 +186,7 @@ func (c StepRelease) releaseToGithub() error {
 	if err != nil || defaultBranch == "" {
 		// fallback to commonly used branches
 		logs.WithError(err).Warn("Failed to detect default branch, falling back to master/main")
-		defaultBranch = "master"
+		defaultBranch = c.DefaultBranch
 		if _, errMain := ExecShellGetStdout(`git show-ref --verify --quiet refs/heads/main && echo main || echo`); errMain == nil {
 			// if main exists locally, prefer it
 			candidate, _ := ExecShellGetStdout(`git rev-parse --abbrev-ref main || echo`)
