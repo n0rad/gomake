@@ -1,12 +1,13 @@
 package gomake
 
 import (
+	"os"
+	"strings"
+
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
 	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
 )
 
 type StepRelease struct {
@@ -179,7 +180,24 @@ func (c StepRelease) releaseToGithub() error {
 	}
 	githubRepoPath := gitRemoteUrlSplit[1]
 
-	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token ` + c.Token + `" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"master\",\"name\": \"v` + c.Version + `\",\"body\": \"Release of version ` + c.Version + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
+	// detect default branch instead of hardcoding master
+	defaultBranch, err := ExecShellGetStdout(`git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@'`)
+	if err != nil || defaultBranch == "" {
+		// fallback to commonly used branches
+		logs.WithError(err).Warn("Failed to detect default branch, falling back to master/main")
+		defaultBranch = "master"
+		if _, errMain := ExecShellGetStdout(`git show-ref --verify --quiet refs/heads/main && echo main || echo`); errMain == nil {
+			// if main exists locally, prefer it
+			candidate, _ := ExecShellGetStdout(`git rev-parse --abbrev-ref main || echo`)
+			candidate = strings.TrimSpace(candidate)
+			if candidate != "" {
+				defaultBranch = candidate
+			}
+		}
+	}
+	defaultBranch = strings.TrimSpace(defaultBranch)
+
+	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token ` + c.Token + `" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"` + defaultBranch + `\",\"name\": \"v` + c.Version + `\",\"body\": \"Release of version ` + c.Version + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
 	if err != nil {
 		return errs.WithE(err, "Failed to get github file post url")
 	}
