@@ -2,9 +2,10 @@ package gomake
 
 import (
 	"fmt"
-	"github.com/n0rad/go-erlog/errs"
 	"strings"
 	"time"
+
+	"github.com/n0rad/go-erlog/errs"
 )
 
 func IsGitWorkTreeClean() error {

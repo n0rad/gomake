@@ -1,16 +1,18 @@
 package gomake
 
 import (
+	"os"
+	"path"
+
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
 	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
 )
 
 type Project struct {
 	name         string
+	versionFunc  func() (string, error)
 	args         []string
 	steps        map[string]Step
 	commandCache map[string]*cobra.Command
@@ -67,6 +69,9 @@ func (p *Project) Init() error {
 			return errs.WithE(err, "Failed to get working directory to build")
 		}
 		p.name = path.Base(wd)
+	}
+	if p.versionFunc == nil {
+		p.versionFunc = GeneratedVersion
 	}
 
 	for i := range p.steps {
@@ -152,6 +157,11 @@ func (p Builder) MustBuild() *Project {
 
 func (p Builder) WithName(name string) Builder {
 	p.name = name
+	return p
+}
+
+func (p Builder) WithVersionFunc(f func() (string, error)) Builder {
+	p.versionFunc = f
 	return p
 }
 

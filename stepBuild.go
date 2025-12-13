@@ -1,12 +1,13 @@
 package gomake
 
 import (
-	"github.com/n0rad/go-erlog/data"
-	"github.com/n0rad/go-erlog/errs"
-	"github.com/spf13/cobra"
 	"os"
 	"runtime"
 	"strings"
+
+	"github.com/n0rad/go-erlog/data"
+	"github.com/n0rad/go-erlog/errs"
+	"github.com/spf13/cobra"
 )
 
 type Program struct {
@@ -64,11 +65,11 @@ func (c *StepBuild) Init(project *Project) error {
 	}
 
 	if c.Version == "" {
-		v, err := GeneratedVersion()
+		version, err := c.project.versionFunc()
 		if err != nil {
 			return errs.WithE(err, "Failed to generate version")
 		}
-		c.Version = v
+		c.Version = version
 	}
 
 	for i := range c.Programs {

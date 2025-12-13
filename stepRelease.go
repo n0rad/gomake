@@ -34,11 +34,11 @@ func (c *StepRelease) Init(project *Project) error {
 	}
 
 	if c.Version == "" {
-		v, err := GeneratedVersion()
+		version, err := c.project.versionFunc()
 		if err != nil {
 			return errs.WithE(err, "Failed to generate version")
 		}
-		c.Version = v
+		c.Version = version
 	}
 
 	return nil
