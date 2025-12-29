@@ -89,6 +89,7 @@ func (c *StepBuild) Init(project *Project) error {
 }
 
 func (c *StepBuild) GetCommand() *cobra.Command {
+	PrepareOnly := false
 	cmd := &cobra.Command{
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -127,6 +128,10 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 				ColorPrintln("fix", Magenta)
 				if err := ExecShell("go fix ./..."); err != nil {
 					return err
+				}
+
+				if PrepareOnly {
+					return nil
 				}
 
 				for _, program := range c.Programs {
@@ -187,6 +192,8 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 			return c.project.processArgs(args)
 		},
 	}
+
+	cmd.Flags().BoolVarP(&PrepareOnly, "prepare-only", "p", false, "Only prepare the build, do not build binaries")
 
 	RegisterLogLevelParser(cmd)
 
