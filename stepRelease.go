@@ -34,14 +34,6 @@ func (c *StepRelease) Init(project *Project) error {
 		c.Upx = False
 	}
 
-	if c.Version == "" {
-		version, err := c.project.versionFunc()
-		if err != nil {
-			return errs.WithE(err, "Failed to generate version")
-		}
-		c.Version = version
-	}
-
 	return nil
 }
 
@@ -55,7 +47,6 @@ func (c *StepRelease) Project() *Project {
 
 func (c *StepRelease) GetCommand() *cobra.Command {
 	var token string
-	var version string
 
 	cmd := &cobra.Command{
 		SilenceErrors: true,
@@ -65,12 +56,17 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Releasing", HGreen)
 
+				if c.Version == "" {
+					version, err := c.project.versionFunc()
+					if err != nil {
+						return errs.WithE(err, "Failed to generate version")
+					}
+					c.Version = version
+				}
+
 				c.Token = os.Getenv("GITHUB_TOKEN")
 				if token != "" {
 					c.Token = token
-				}
-				if version != "" {
-					c.Version = version
 				}
 
 				// clean
@@ -151,7 +147,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&token, "token", "t", "", "token")
-	cmd.Flags().StringVarP(&version, "version", "v", "", "version")
+	cmd.Flags().StringVarP(&c.Version, "version", "v", "", "version")
 	RegisterLogLevelParser(cmd)
 
 	return cmd

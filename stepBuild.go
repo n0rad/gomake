@@ -64,14 +64,6 @@ func (c *StepBuild) Init(project *Project) error {
 		c.UseVendor = False
 	}
 
-	if c.Version == "" {
-		version, err := c.project.versionFunc()
-		if err != nil {
-			return errs.WithE(err, "Failed to generate version")
-		}
-		c.Version = version
-	}
-
 	for i := range c.Programs {
 		c.Programs[i].version = c.Version
 		if c.Programs[i].Cgo == nil {
@@ -98,6 +90,14 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Building", HGreen)
+
+				if c.Version == "" {
+					version, err := c.project.versionFunc()
+					if err != nil {
+						return errs.WithE(err, "Failed to generate version")
+					}
+					c.Version = version
+				}
 
 				distBindataPath := "dist/bindata"
 				if err := os.MkdirAll(distBindataPath, 0755); err != nil {
@@ -194,6 +194,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&PrepareOnly, "prepare-only", "p", false, "Only prepare the build, do not build binaries")
+	cmd.Flags().StringVarP(&c.Version, "version", "v", c.Version, "Version to build")
 
 	RegisterLogLevelParser(cmd)
 

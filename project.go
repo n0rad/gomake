@@ -79,7 +79,7 @@ func (p *Project) Init() error {
 
 	for i := range p.steps {
 		if err := p.steps[i].Init(p); err != nil {
-			return errs.WithE(err, "Failed to init Step in project")
+			return errs.WithEF(err, data.WithField("step", p.steps[i].Name()), "Failed to init Step in project")
 		}
 	}
 
