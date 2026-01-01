@@ -11,14 +11,15 @@ import (
 )
 
 type StepRelease struct {
-	project         *Project
-	OsArchRelease   []string
-	Upx             *bool
-	Version         string
-	Token           string
-	DefaultBranch   string // for cases where detection fails
-	GithubRelease   bool
-	PostReleaseHook func(StepRelease) error // upload
+	project           *Project
+	OsArchRelease     []string
+	Upx               *bool
+	Version           string
+	Token             string
+	DefaultBranch     string // for cases where detection fails
+	GithubRelease     bool
+	GenerateChangelog bool
+	PostReleaseHook   func(StepRelease) error // upload
 }
 
 func (c *StepRelease) Init(project *Project) error {
@@ -148,9 +149,37 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&token, "token", "t", "", "token")
 	cmd.Flags().StringVarP(&c.Version, "version", "v", "", "version")
+	cmd.Flags().BoolVarP(&c.GenerateChangelog, "changelog", "c", false, "generate changelog from git commits")
 	RegisterLogLevelParser(cmd)
 
 	return cmd
+}
+
+func (c StepRelease) generateChangelog() (string, error) {
+	lastTag, err := ExecShellGetStdout(`git describe --tags --abbrev=0 2>/dev/null || echo`)
+	if err != nil {
+		return "", errs.WithE(err, "Failed to discover last git tag for changelog")
+	}
+	lastTag = strings.TrimSpace(lastTag)
+
+	var logCmd string
+	if lastTag == "" {
+		logCmd = `git log --pretty=format:"* %s"`
+	} else {
+		logCmd = `git log ` + lastTag + `..HEAD --pretty=format:"* %s"`
+	}
+
+	changes, err := ExecShellGetStdout(logCmd)
+	if err != nil {
+		return "", errs.WithE(err, "Failed to build changelog from git log")
+	}
+	changes = strings.TrimSpace(changes)
+	if changes == "" {
+		logs.Info("No changes detected for changelog")
+		return "", nil
+	}
+
+	return "## v" + c.Version + "\n" + changes + "\n\n", nil
 }
 
 func (c StepRelease) releaseToGithub() error {
@@ -177,6 +206,16 @@ func (c StepRelease) releaseToGithub() error {
 	}
 	githubRepoPath := gitRemoteUrlSplit[1]
 
+	// build changelog body if requested
+	body := "Release of version " + c.Version
+	if c.GenerateChangelog {
+		if changelog, err := c.generateChangelog(); err != nil {
+			logs.WithError(err).Warn("Failed to generate changelog, falling back to default body")
+		} else if strings.TrimSpace(changelog) != "" {
+			body = changelog
+		}
+	}
+
 	// detect default branch instead of hardcoding master
 	defaultBranch, err := ExecShellGetStdout(`git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@'`)
 	if err != nil || defaultBranch == "" {
@@ -194,7 +233,7 @@ func (c StepRelease) releaseToGithub() error {
 	}
 	defaultBranch = strings.TrimSpace(defaultBranch)
 
-	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token ` + c.Token + `" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"` + defaultBranch + `\",\"name\": \"v` + c.Version + `\",\"body\": \"Release of version ` + c.Version + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
+	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token ` + c.Token + `" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"` + defaultBranch + `\",\"name\": \"v` + c.Version + `\",\"body\": \"` + strings.ReplaceAll(body, "\"", "\\\"") + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
 	if err != nil {
 		return errs.WithE(err, "Failed to get github file post url")
 	}
