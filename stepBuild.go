@@ -91,14 +91,6 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Building", HGreen)
 
-				if c.Version == "" {
-					version, err := c.project.versionFunc()
-					if err != nil {
-						return errs.WithE(err, "Failed to generate version")
-					}
-					c.Version = version
-				}
-
 				distBindataPath := "dist/bindata"
 				if err := os.MkdirAll(distBindataPath, 0755); err != nil {
 					return errs.WithEF(err, data.WithField("path", distBindataPath), "Failed to create bindata dist directory")
@@ -120,6 +112,11 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					}
 				}
 
+				ColorPrintln("generate", Magenta)
+				if err := Exec("go", "generate", "./..."); err != nil {
+					return err
+				}
+
 				ColorPrintln("fmt", Magenta)
 				if err := Exec("go", "fmt", "./..."); err != nil {
 					return err
@@ -132,6 +129,14 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 
 				if PrepareOnly {
 					return nil
+				}
+
+				if c.Version == "" {
+					version, err := c.project.versionFunc()
+					if err != nil {
+						return errs.WithE(err, "Failed to generate version")
+					}
+					c.Version = version
 				}
 
 				for _, program := range c.Programs {
