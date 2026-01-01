@@ -43,9 +43,6 @@ func (p *Project) Init() error {
 	if _, ok := p.steps["clean"]; !ok {
 		p.steps["clean"] = &StepClean{}
 	}
-	if _, ok := p.steps["pre-build"]; !ok {
-		p.steps["build"] = &StepBuild{}
-	}
 	if _, ok := p.steps["build"]; !ok {
 		p.steps["build"] = &StepBuild{}
 	}
