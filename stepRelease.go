@@ -1,8 +1,12 @@
 package gomake
 
 import (
+	"context"
 	"os"
 	"strings"
+
+	"github.com/google/go-github/v63/github"
+	"golang.org/x/oauth2"
 
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
@@ -11,15 +15,16 @@ import (
 )
 
 type StepRelease struct {
-	project           *Project
-	OsArchRelease     []string
-	Upx               *bool
-	Version           string
-	Token             string
-	DefaultBranch     string // for cases where detection fails
-	GithubRelease     bool
-	GenerateChangelog bool
-	PostReleaseHook   func(StepRelease) error // upload
+	project              *Project
+	OsArchRelease        []string
+	Upx                  *bool
+	Version              string
+	Token                string
+	DefaultBranch        string // for cases where detection fails
+	GithubRelease        bool
+	GenerateChangelog    bool
+	PostReleaseHook      func(StepRelease) error // upload
+	IgnoreUnstageChanges bool
 }
 
 func (c *StepRelease) Init(project *Project) error {
@@ -116,8 +121,10 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 					return errs.WithE(err, "Cannot release, check failed")
 				}
 
-				if err := IsGitWorkTreeClean(); err != nil {
-					return errs.WithE(err, "git repository is not clean")
+				if !c.IgnoreUnstageChanges {
+					if err := IsGitWorkTreeClean(); err != nil {
+						return errs.WithE(err, "git repository is not clean")
+					}
 				}
 
 				// compressing
@@ -150,6 +157,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&token, "token", "t", "", "token")
 	cmd.Flags().StringVarP(&c.Version, "version", "v", "", "version")
 	cmd.Flags().BoolVarP(&c.GenerateChangelog, "changelog", "c", false, "generate changelog from git commits")
+	cmd.Flags().BoolVarP(&c.IgnoreUnstageChanges, "unstaged", "U", false, "Ignore unstaged changes")
 	RegisterLogLevelParser(cmd)
 
 	return cmd
@@ -205,6 +213,11 @@ func (c StepRelease) releaseToGithub() error {
 		return errs.WithF(data.WithField("url", gitRemoteUrl), "Invalid github remote url")
 	}
 	githubRepoPath := gitRemoteUrlSplit[1]
+	ownerRepo := strings.SplitN(githubRepoPath, "/", 2)
+	if len(ownerRepo) != 2 {
+		return errs.WithF(data.WithField("repo", githubRepoPath), "Invalid github repo path")
+	}
+	owner, repo := ownerRepo[0], ownerRepo[1]
 
 	// build changelog body if requested
 	body := "Release of version " + c.Version
@@ -233,17 +246,51 @@ func (c StepRelease) releaseToGithub() error {
 	}
 	defaultBranch = strings.TrimSpace(defaultBranch)
 
-	posturl, err := ExecShellGetStdout(`curl -H "Authorization: token ` + c.Token + `" --data "{\"tag_name\": \"v` + c.Version + `\",\"target_commitish\": \"` + defaultBranch + `\",\"name\": \"v` + c.Version + `\",\"body\": \"` + strings.ReplaceAll(body, "\"", "\\\"") + `\",\"draft\": false,\"prerelease\": false}" https://api.github.com/repos/` + githubRepoPath + `/releases | grep "\"upload_url\"" | sed -ne 's/.*\(http[^"]*\).*/\1/p'`)
+	// Create github client
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.Token})
+	hc := oauth2.NewClient(ctx, ts)
+	gh := github.NewClient(hc)
+
+	tag := "v" + c.Version
+	rel, _, err := gh.Repositories.CreateRelease(ctx, owner, repo, &github.RepositoryRelease{
+		TagName:         github.String(tag),
+		TargetCommitish: github.String(defaultBranch),
+		Name:            github.String(tag),
+		Body:            github.String(body),
+		Draft:           github.Bool(false),
+		Prerelease:      github.Bool(false),
+	})
 	if err != nil {
-		return errs.WithE(err, "Failed to get github file post url")
+		return errs.WithE(err, "Failed to create github release")
 	}
-	posturl = strings.SplitN(posturl, "{", 2)[0]
+	if rel == nil || rel.ID == nil {
+		return errs.With("Failed to create github release: missing release id")
+	}
 
 	for _, osArch := range c.OsArchRelease {
 		releaseFile := c.project.name + "-" + osArch + ".tar.gz"
 		logs.WithField("file", releaseFile).Info("Uploading file")
 
-		if err := Exec("curl", "-H", "Authorization: token "+c.Token, "-i", "-X", "POST", "-H", "Content-Type: application/x-gzip", "--data-binary", "@dist/"+releaseFile, posturl+"?name="+releaseFile+"&label="+releaseFile); err != nil {
+		f, err := os.Open("dist/" + releaseFile)
+		if err != nil {
+			return errs.WithEF(err, data.WithField("file", releaseFile), "Failed to open release file")
+		}
+		func() {
+			defer f.Close()
+
+			assetOpt := &github.UploadOptions{Name: releaseFile, Label: releaseFile}
+			_, resp, upErr := gh.Repositories.UploadReleaseAsset(ctx, owner, repo, *rel.ID, assetOpt, f)
+			if upErr != nil {
+				// propagate status when available
+				if resp != nil {
+					upErr = errs.WithEF(upErr, data.WithField("status", resp.Status), "Failed to upload github release asset")
+				}
+				err = upErr
+				return
+			}
+		}()
+		if err != nil {
 			return errs.WithEF(err, data.WithField("file", releaseFile), "Failed to upload file")
 		}
 	}
