@@ -8,16 +8,19 @@ require (
 	github.com/client9/misspell v0.3.4
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
+	github.com/google/go-github/v63 v63.0.0
 	github.com/gordonklaus/ineffassign v0.2.0
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/n0rad/go-erlog v0.0.0-20240412093139-2d3c00f17991
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.2.2
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
+	golang.org/x/oauth2 v0.34.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
