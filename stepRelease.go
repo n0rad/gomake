@@ -21,6 +21,7 @@ type StepRelease struct {
 	Version              string
 	Token                string
 	DefaultBranch        string // for cases where detection fails
+	TagPrefix            string // optional prefix for the release tag and name (e.g. "cli-")
 	GithubRelease        bool
 	GenerateChangelog    bool
 	PostReleaseHook      func(StepRelease) error // upload
@@ -156,6 +157,7 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&token, "token", "t", "", "token")
 	cmd.Flags().StringVarP(&c.Version, "version", "v", "", "version")
+	cmd.Flags().StringVarP(&c.TagPrefix, "prefix", "p", c.TagPrefix, "prefix for the release tag and name (e.g. \"cli-\")")
 	cmd.Flags().BoolVarP(&c.GenerateChangelog, "changelog", "c", false, "generate changelog from git commits")
 	cmd.Flags().BoolVarP(&c.IgnoreUnstageChanges, "unstaged", "U", false, "Ignore unstaged changes")
 	RegisterLogLevelParser(cmd)
@@ -252,7 +254,7 @@ func (c StepRelease) releaseToGithub() error {
 	hc := oauth2.NewClient(ctx, ts)
 	gh := github.NewClient(hc)
 
-	tag := "v" + c.Version
+	tag := c.TagPrefix + "v" + c.Version
 	rel, _, err := gh.Repositories.CreateRelease(ctx, owner, repo, &github.RepositoryRelease{
 		TagName:         github.String(tag),
 		TargetCommitish: github.String(defaultBranch),
