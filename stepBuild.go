@@ -7,6 +7,7 @@ import (
 
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
+	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
 )
 
@@ -179,12 +180,16 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 						return errs.WithF(fields, "Cannot upx a library package")
 					}
 					if *c.Upx {
-						if std, err := ExecGetStd("which", "upx"); err != nil {
-							return errs.WithEF(err, fields.WithField("std", std), "upx binary not in path")
-						}
+						if strings.HasPrefix(program.OsArch, "darwin") {
+							logs.WithField("osArch", program.OsArch).Info("Skipping upx: not supported on darwin")
+						} else {
+							if std, err := ExecGetStd("which", "upx"); err != nil {
+								return errs.WithEF(err, fields.WithField("std", std), "upx binary not in path")
+							}
 
-						if err := Exec("upx", "--ultra-brute", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName); err != nil {
-							return errs.WithEF(err, fields, "upx failed")
+							if err := Exec("upx", "--ultra-brute", "dist/"+c.project.name+"-"+program.OsArch+"/"+program.BinaryName); err != nil {
+								return errs.WithEF(err, fields, "upx failed")
+							}
 						}
 					}
 
