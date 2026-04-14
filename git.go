@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
 )
 
@@ -13,20 +14,16 @@ func IsGitWorkTreeClean() error {
 		return errs.WithE(err, "failed to update git index")
 	}
 
-	if err := Exec("git", "diff-files", "--quiet", "--ignore-submodules", "--"); err != nil {
-		return errs.WithE(err, "You have unstaged changes")
+	if unstagedFiles, err := ExecGetStdout("git", "diff-files", "--name-only", "--ignore-submodules", "--"); err != nil {
+		return errs.WithE(err, "failed to check unstaged changes")
+	} else if strings.TrimSpace(unstagedFiles) != "" {
+		return errs.WithF(data.WithField("files", strings.TrimSpace(unstagedFiles)), "you have unstaged changes")
 	}
 
-	if _, err := ExecGetStdout("git", "diff-files", "--name-status", "-r", "--ignore-submodules", "--"); err != nil {
-		return errs.WithE(err, "You have uncommitted changes")
-	}
-
-	if err := Exec("git", "diff-index", "--cached", "--quiet", "HEAD", "--ignore-submodules", "--"); err != nil {
-		return errs.WithE(err, "You have unstaged changes in the index")
-	}
-
-	if _, err := ExecGetStdout("git", "diff-index", "--cached", "--name-status", "-r", "--ignore-submodules", "HEAD", "--"); err != nil {
-		return errs.WithE(err, "You have uncommitted changes in the index")
+	if stagedFiles, err := ExecGetStdout("git", "diff-index", "--cached", "--name-only", "--ignore-submodules", "HEAD", "--"); err != nil {
+		return errs.WithE(err, "failed to check staged changes")
+	} else if strings.TrimSpace(stagedFiles) != "" {
+		return errs.WithF(data.WithField("files", strings.TrimSpace(stagedFiles)), "you have staged but uncommitted changes")
 	}
 
 	return nil
