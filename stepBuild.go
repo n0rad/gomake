@@ -41,6 +41,8 @@ type StepBuild struct {
 	Version      string
 	UseVendor    *bool
 	Upx          *bool
+	Fix          *bool
+	Fmt          *bool
 	PreBuildHook func(StepBuild) error // prepare bindata files
 
 	project *Project
@@ -59,6 +61,14 @@ func (c *StepBuild) Init(project *Project) error {
 
 	if c.Upx == nil {
 		c.Upx = False
+	}
+
+	if c.Fix == nil {
+		c.Fix = True
+	}
+
+	if c.Fmt == nil {
+		c.Fmt = True
 	}
 
 	if c.UseVendor == nil {
@@ -118,14 +128,18 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 					return err
 				}
 
-				ColorPrintln("fmt", Magenta)
-				if err := Exec("go", "fmt", "./..."); err != nil {
-					return err
+				if *c.Fmt {
+					ColorPrintln("fmt", Magenta)
+					if err := Exec("go", "fmt", "./..."); err != nil {
+						return err
+					}
 				}
 
-				ColorPrintln("fix", Magenta)
-				if err := ExecShell("go fix ./..."); err != nil {
-					return err
+				if *c.Fix {
+					ColorPrintln("fix", Magenta)
+					if err := ExecShell("go fix ./..."); err != nil {
+						return err
+					}
 				}
 
 				if PrepareOnly {
@@ -204,6 +218,8 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&PrepareOnly, "prepare-only", "p", false, "Only prepare the build, do not build binaries")
+	cmd.Flags().BoolVar(c.Fix, "fix", true, "Run go fix before building")
+	cmd.Flags().BoolVar(c.Fmt, "fmt", true, "Run go fmt before building")
 	cmd.Flags().StringVarP(&c.Version, "version", "v", c.Version, "Version to build")
 
 	RegisterLogLevelParser(cmd)

@@ -87,6 +87,8 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 				build := c.project.steps["build"].(*StepBuild)
 				build.Upx = c.Upx
 				build.Version = c.Version
+				build.Fix = False // do not change the code for release
+				build.Fmt = False // do not change the code for release
 				programs := build.Programs
 				build.Programs = []Program{}
 
