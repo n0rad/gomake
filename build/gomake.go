@@ -1,3 +1,5 @@
+//go:build build
+
 package main
 
 import "github.com/n0rad/gomake"

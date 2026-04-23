@@ -38,7 +38,8 @@ func (c *StepRelease) Init(project *Project) error {
 	}
 
 	if c.Upx == nil {
-		c.Upx = False
+		b := false
+		c.Upx = &b
 	}
 
 	return nil
@@ -87,8 +88,10 @@ func (c *StepRelease) GetCommand() *cobra.Command {
 				build := c.project.steps["build"].(*StepBuild)
 				build.Upx = c.Upx
 				build.Version = c.Version
-				build.Fix = False // do not change the code for release
-				build.Fmt = False // do not change the code for release
+				bfix := false
+				build.Fix = &bfix // do not change the code for release
+				bfmt := false
+				build.Fmt = &bfmt // do not change the code for release
 				programs := build.Programs
 				build.Programs = []Program{}
 

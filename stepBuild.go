@@ -60,25 +60,30 @@ func (c *StepBuild) Init(project *Project) error {
 	}
 
 	if c.Upx == nil {
-		c.Upx = False
+		b := false
+		c.Upx = &b
 	}
 
 	if c.Fix == nil {
-		c.Fix = True
+		b := true
+		c.Fix = &b
 	}
 
 	if c.Fmt == nil {
-		c.Fmt = True
+		b := true
+		c.Fmt = &b
 	}
 
 	if c.UseVendor == nil {
-		c.UseVendor = False
+		b := false
+		c.UseVendor = &b
 	}
 
 	for i := range c.Programs {
 		c.Programs[i].version = c.Version
 		if c.Programs[i].Cgo == nil {
-			c.Programs[i].Cgo = False
+			b := false
+			c.Programs[i].Cgo = &b
 		}
 	}
 
@@ -137,7 +142,7 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 
 				if *c.Fix {
 					ColorPrintln("fix", Magenta)
-					if err := ExecShell("go fix ./..."); err != nil {
+					if err := Exec("go", "fix"); err != nil {
 						return err
 					}
 				}
@@ -218,8 +223,8 @@ func (c *StepBuild) GetCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&PrepareOnly, "prepare-only", "p", false, "Only prepare the build, do not build binaries")
-	cmd.Flags().BoolVar(c.Fix, "fix", true, "Run go fix before building")
-	cmd.Flags().BoolVar(c.Fmt, "fmt", true, "Run go fmt before building")
+	cmd.Flags().BoolVar(c.Fix, "fix", *c.Fix, "Run go fix before building")
+	cmd.Flags().BoolVar(c.Fmt, "fmt", *c.Fmt, "Run go fmt before building")
 	cmd.Flags().StringVarP(&c.Version, "version", "v", c.Version, "Version to build")
 
 	RegisterLogLevelParser(cmd)

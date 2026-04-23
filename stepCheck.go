@@ -1,11 +1,12 @@
 package gomake
 
 import (
+	"os"
+
 	"github.com/n0rad/go-erlog/data"
 	"github.com/n0rad/go-erlog/errs"
 	"github.com/n0rad/go-erlog/logs"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 type StepCheck struct {
@@ -21,19 +22,24 @@ type StepCheck struct {
 func (c *StepCheck) Init(project *Project) error {
 	c.project = project
 	if c.Lint == nil {
-		c.Lint = True
+		b := true
+		c.Lint = &b
 	}
 	if c.Vet == nil {
-		c.Vet = True
+		b := true
+		c.Vet = &b
 	}
 	if c.Misspell == nil {
-		c.Misspell = True
+		b := true
+		c.Misspell = &b
 	}
 	if c.Ineffassign == nil {
-		c.Ineffassign = True
+		b := true
+		c.Ineffassign = &b
 	}
 	if c.Gocyclo == nil {
-		c.Gocyclo = True
+		b := true
+		c.Gocyclo = &b
 	}
 
 	return nil
