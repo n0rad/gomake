@@ -58,13 +58,13 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := CommandDurationWrapper(cmd, func() error {
 				ColorPrintln("Checking", HGreen)
-				// golint
+				// golangci-lint
 				if *c.Lint {
-					if err := EnsureTool("golint", "golang.org/x/lint/golint"); err != nil {
+					if err := EnsureTool("golangci-lint", "github.com/golangci/golangci-lint/v2"); err != nil {
 						return err
 					}
 					ColorPrintln("lint", Magenta)
-					if err := ExecShell("./dist-tools/golint $(go list ./... | grep -v '/vendor/') | grep -v 'should have comment or be unexported' || true"); err != nil {
+					if err := ExecShell("./dist-tools/golangci-lint run ./... || true"); err != nil {
 						return errs.WithE(err, "lint failed")
 					}
 				}
