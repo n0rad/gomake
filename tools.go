@@ -7,5 +7,5 @@ import (
 	_ "github.com/fzipp/gocyclo"
 	_ "github.com/go-bindata/go-bindata/go-bindata"
 	_ "github.com/gordonklaus/ineffassign"
-	_ "golang.org/x/lint/golint"
+	_ "github.com/golangci/golangci-lint/v2"
 )
