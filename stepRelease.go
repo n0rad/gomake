@@ -261,12 +261,12 @@ func (c StepRelease) releaseToGithub() error {
 
 	tag := c.TagPrefix + "v" + c.Version
 	rel, _, err := gh.Repositories.CreateRelease(ctx, owner, repo, &github.RepositoryRelease{
-		TagName:         github.String(tag),
-		TargetCommitish: github.String(defaultBranch),
-		Name:            github.String(tag),
-		Body:            github.String(body),
-		Draft:           github.Bool(false),
-		Prerelease:      github.Bool(false),
+		TagName:         new(tag),
+		TargetCommitish: new(defaultBranch),
+		Name:            new(tag),
+		Body:            new(body),
+		Draft:           new(false),
+		Prerelease:      new(false),
 	})
 	if err != nil {
 		return errs.WithE(err, "Failed to create github release")

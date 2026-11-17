@@ -6,6 +6,6 @@ import (
 	_ "github.com/client9/misspell/cmd/misspell"
 	_ "github.com/fzipp/gocyclo"
 	_ "github.com/go-bindata/go-bindata/go-bindata"
+	_ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 	_ "github.com/gordonklaus/ineffassign"
-	_ "github.com/golangci/golangci-lint/v2"
 )

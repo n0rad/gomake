@@ -60,7 +60,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 				ColorPrintln("Checking", HGreen)
 				// golangci-lint
 				if *c.Lint {
-					if err := EnsureTool("golangci-lint", "github.com/golangci/golangci-lint/v2"); err != nil {
+					if err := EnsureTool("golangci-lint", "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"); err != nil {
 						return err
 					}
 					ColorPrintln("lint", Magenta)
@@ -94,7 +94,7 @@ func (c *StepCheck) GetCommand() *cobra.Command {
 						return err
 					}
 					ColorPrintln("ineffassign", Magenta)
-					if err := ExecShell("./dist-tools/ineffassign -n $(find . -name '*.go' ! -path './vendor/*') || true"); err != nil {
+					if err := ExecShell("./dist-tools/ineffassign ./... || true"); err != nil {
 						return errs.WithE(err, "ineffassign failed")
 					}
 				}
